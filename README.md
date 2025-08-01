@@ -1,7 +1,6 @@
-# Workout Tracker App
+# Avi's Workout Tracker
   
-This is a project built with [Chef](https://chef.convex.dev) using [Convex](https://convex.dev) as its backend.
- You can find docs about Chef with useful information like how to deploy to production [here](https://docs.convex.dev/chef).
+This is a workout tracking application built with [Convex](https://convex.dev) as its backend and React for the frontend.
   
 This project is connected to the Convex deployment named [`dazzling-snake-548`](https://dashboard.convex.dev/d/dazzling-snake-548).
   
@@ -15,7 +14,7 @@ The backend code is in the `convex` directory.
 
 ## App authentication
 
-Chef apps use [Convex Auth](https://auth.convex.dev/) with Anonymous auth for easy sign in. You may wish to change this before deploying your app.
+This app uses [Convex Auth](https://auth.convex.dev/) with Anonymous auth for easy sign in. You may wish to change this before deploying your app.
 
 ## Developing and deploying your app
 
