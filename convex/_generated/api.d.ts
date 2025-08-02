@@ -19,6 +19,7 @@ import type * as http from "../http.js";
 import type * as router from "../router.js";
 import type * as sessions from "../sessions.js";
 import type * as sets from "../sets.js";
+import type * as users from "../users.js";
 import type * as workouts from "../workouts.js";
 
 /**
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   router: typeof router;
   sessions: typeof sessions;
   sets: typeof sets;
+  users: typeof users;
   workouts: typeof workouts;
 }>;
 export declare const api: FilterApi<

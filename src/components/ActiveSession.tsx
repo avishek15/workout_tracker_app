@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
+import { Play } from "lucide-react";
 
 export function ActiveSession() {
     const activeSession = useQuery(api.sessions.getActive);
@@ -22,11 +23,13 @@ export function ActiveSession() {
     if (!activeSession) {
         return (
             <div className="text-center py-12">
-                <div className="text-6xl mb-4">🏃‍♂️</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <div className="w-16 h-16 bg-accent-primary rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Play className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-text-primary mb-2 font-montserrat">
                     No Active Session
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-text-secondary font-source-sans">
                     Start a workout from your workout list to begin tracking.
                 </p>
             </div>

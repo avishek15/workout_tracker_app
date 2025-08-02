@@ -4,6 +4,12 @@ import { authTables } from "@convex-dev/auth/server";
 
 const applicationTables = {
 
+    // User profile extensions (for data not in auth user schema)
+    userProfiles: defineTable({
+        userId: v.id("users"),
+        bio: v.optional(v.string()),
+    }).index("by_user", ["userId"]),
+
     // Workout templates that users can create and reuse
     workouts: defineTable({
         name: v.string(),
