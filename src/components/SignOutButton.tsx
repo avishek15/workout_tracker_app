@@ -18,4 +18,4 @@ export function SignOutButton() {
       Sign out
     </button>
   );
-}
+} 

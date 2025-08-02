@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { WorkoutList } from "./WorkoutList";
@@ -15,9 +15,11 @@ export function WorkoutDashboard() {
     const activeSession = useQuery(api.sessions.getActive);
 
     // If there's an active session, show it by default
-    if (activeSession && activeTab !== "active") {
-        setActiveTab("active");
-    }
+    React.useEffect(() => {
+        if (activeSession && activeTab !== "active") {
+            setActiveTab("active");
+        }
+    }, [activeSession, activeTab]);
 
     const tabs = [
         { id: "workouts" as const, label: "Workouts", icon: "📋" },

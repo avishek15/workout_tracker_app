@@ -1,58 +1,209 @@
-import { Authenticated, Unauthenticated, useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
-import { SignInForm } from "./SignInForm";
-import { SignOutButton } from "./SignOutButton";
-import { Toaster } from "sonner";
+import { useConvexAuth } from "convex/react";
+import { SignInForm } from "./components/SignInForm";
+import { SignOutButton } from "./components/SignOutButton";
 import { WorkoutDashboard } from "./components/WorkoutDashboard";
+import { ProgressDashboard } from "./components/ProgressDashboard";
+import { SessionHistory } from "./components/SessionHistory";
+import { useState } from "react";
+import { Toaster } from "sonner";
 
-export default function App() {
-    return (
-        <div className="min-h-screen flex flex-col bg-gray-50">
-            <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm h-16 flex justify-between items-center border-b shadow-sm px-4">
-                <h2 className="text-xl font-semibold text-primary">
-                    💪 Avi's Workout Tracker
-                </h2>
-                <Authenticated>
-                    <SignOutButton />
-                </Authenticated>
-            </header>
-            <main className="flex-1 p-4">
-                <Content />
-            </main>
-            <Toaster />
-        </div>
-    );
-}
+function App() {
+    const { isAuthenticated, isLoading } = useConvexAuth();
+    const [activeTab, setActiveTab] = useState<
+        "workouts" | "progress" | "history"
+    >("workouts");
 
-function Content() {
-    const loggedInUser = useQuery(api.auth.loggedInUser);
-
-    if (loggedInUser === undefined) {
+    if (isLoading) {
         return (
-            <div className="flex justify-center items-center min-h-[400px]">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
+                    <h2 className="text-xl font-semibold text-gray-700 mb-2">
+                        Loading Avi's Fitness Tracker
+                    </h2>
+                    <p className="text-gray-500">Getting everything ready...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
+                <div className="w-full max-w-md">
+                    {/* Header */}
+                    <div className="text-center mb-8">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mb-4">
+                            <svg
+                                className="w-8 h-8 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                                />
+                            </svg>
+                        </div>
+                        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                            Avi's Fitness Tracker
+                        </h1>
+                        <p className="text-gray-600">
+                            Track your fitness journey with ease
+                        </p>
+                    </div>
+
+                    {/* Auth Form */}
+                    <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+                        <SignInForm />
+                    </div>
+
+                    {/* Footer */}
+                    <div className="text-center mt-8">
+                        <p className="text-sm text-gray-500">
+                            Built with ❤️ using Convex & React
+                        </p>
+                    </div>
+                </div>
+                <Toaster position="top-right" />
             </div>
         );
     }
 
     return (
-        <div className="max-w-6xl mx-auto">
-            <Authenticated>
-                <WorkoutDashboard />
-            </Authenticated>
-            <Unauthenticated>
-                <div className="max-w-md mx-auto mt-20">
-                    <div className="text-center mb-8">
-                        <h1 className="text-4xl font-bold text-primary mb-4">
-                            Avi's Workout Tracker
-                        </h1>
-                        <p className="text-xl text-secondary">
-                            Sign in to start tracking your workouts
-                        </p>
+        <div className="min-h-screen bg-gray-50">
+            {/* Header */}
+            <header className="bg-white shadow-sm border-b border-gray-200">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between items-center h-16">
+                        <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                                <svg
+                                    className="w-5 h-5 text-white"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                                    />
+                                </svg>
+                            </div>
+                            <h1 className="text-xl font-bold text-gray-900">
+                                Avi's Fitness Tracker
+                            </h1>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                            <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-600">
+                                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                <span>Ready to train</span>
+                            </div>
+                            <SignOutButton />
+                        </div>
                     </div>
-                    <SignInForm />
                 </div>
-            </Unauthenticated>
+            </header>
+
+            {/* Navigation Tabs */}
+            <div className="bg-white border-b border-gray-200">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <nav className="flex space-x-8">
+                        <button
+                            onClick={() => setActiveTab("workouts")}
+                            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                                activeTab === "workouts"
+                                    ? "border-blue-500 text-blue-600"
+                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                            }`}
+                        >
+                            <div className="flex items-center space-x-2">
+                                <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                                    />
+                                </svg>
+                                <span>Workouts</span>
+                            </div>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("progress")}
+                            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                                activeTab === "progress"
+                                    ? "border-blue-500 text-blue-600"
+                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                            }`}
+                        >
+                            <div className="flex items-center space-x-2">
+                                <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                                    />
+                                </svg>
+                                <span>Progress</span>
+                            </div>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("history")}
+                            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                                activeTab === "history"
+                                    ? "border-blue-500 text-blue-600"
+                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                            }`}
+                        >
+                            <div className="flex items-center space-x-2">
+                                <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                </svg>
+                                <span>History</span>
+                            </div>
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            {/* Main Content */}
+            <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    {activeTab === "workouts" && <WorkoutDashboard />}
+                    {activeTab === "progress" && <ProgressDashboard />}
+                    {activeTab === "history" && <SessionHistory />}
+                </div>
+            </main>
+            <Toaster position="top-right" />
         </div>
     );
 }
+
+export default App;
