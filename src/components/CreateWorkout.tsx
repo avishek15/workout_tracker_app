@@ -78,12 +78,12 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-text-primary font-montserrat">
                     Create New Workout
                 </h2>
                 <button
                     onClick={onClose}
-                    className="text-gray-500 hover:text-gray-700 text-xl font-bold"
+                    className="text-text-muted hover:text-text-primary text-xl font-bold"
                 >
                     ×
                 </button>
@@ -93,27 +93,27 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                 {/* Workout Details */}
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-text-secondary mb-2 font-source-sans">
                             Workout Name *
                         </label>
                         <input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                            className="w-full px-3 py-2 border border-accent-primary/30 rounded-lg focus:ring-2 focus:ring-accent-primary focus:border-transparent bg-background-primary text-text-primary placeholder-text-muted"
                             placeholder="e.g., Push Day, Full Body, etc."
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-text-secondary mb-2 font-source-sans">
                             Description
                         </label>
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                            className="w-full px-3 py-2 border border-accent-primary/30 rounded-lg focus:ring-2 focus:ring-accent-primary focus:border-transparent bg-background-primary text-text-primary placeholder-text-muted"
                             rows={3}
                             placeholder="Optional description..."
                         />
@@ -122,13 +122,13 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
 
                 {/* Add Exercise */}
                 <div className="border-t pt-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    <h3 className="text-lg font-semibold text-text-primary mb-4 font-montserrat">
                         Add Exercises
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-text-secondary mb-1 font-source-sans">
                                 Exercise Name *
                             </label>
                             <input
@@ -140,13 +140,13 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                                         name: e.target.value,
                                     })
                                 }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                className="w-full px-3 py-2 border border-accent-primary/30 rounded-lg focus:ring-2 focus:ring-accent-primary focus:border-transparent bg-background-primary text-text-primary placeholder-text-muted"
                                 placeholder="e.g., Bench Press"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-text-secondary mb-1 font-source-sans">
                                 Target Sets
                             </label>
                             <input
@@ -160,12 +160,12 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                                             parseInt(e.target.value) || 1,
                                     })
                                 }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                className="w-full px-3 py-2 border border-accent-primary/30 rounded-lg focus:ring-2 focus:ring-accent-primary focus:border-transparent bg-background-primary text-text-primary"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-text-secondary mb-1 font-source-sans">
                                 Target Reps
                             </label>
                             <input
@@ -180,13 +180,13 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                                             : undefined,
                                     })
                                 }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                className="w-full px-3 py-2 border border-accent-primary/30 rounded-lg focus:ring-2 focus:ring-accent-primary focus:border-transparent bg-background-primary text-text-primary placeholder-text-muted"
                                 placeholder="Optional"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-text-secondary mb-1 font-source-sans">
                                 Target Weight (lbs)
                             </label>
                             <input
@@ -202,7 +202,7 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                                             : undefined,
                                     })
                                 }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                className="w-full px-3 py-2 border border-accent-primary/30 rounded-lg focus:ring-2 focus:ring-accent-primary focus:border-transparent bg-background-primary text-text-primary placeholder-text-muted"
                                 placeholder="Optional"
                             />
                         </div>
@@ -211,7 +211,7 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                             <button
                                 type="button"
                                 onClick={addExercise}
-                                className="w-full bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-hover transition-colors font-medium"
+                                className="w-full bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium font-source-sans"
                             >
                                 Add Exercise
                             </button>
@@ -222,19 +222,19 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                 {/* Exercise List */}
                 {exercises.length > 0 && (
                     <div className="space-y-3">
-                        <h4 className="font-medium text-gray-700">
+                        <h4 className="font-medium text-text-secondary font-source-sans">
                             Exercises ({exercises.length}):
                         </h4>
                         {exercises.map((exercise, index) => (
                             <div
                                 key={index}
-                                className="bg-gray-50 rounded-lg p-4 flex justify-between items-center"
+                                className="bg-background-primary rounded-lg p-4 flex justify-between items-center border border-accent-primary/20"
                             >
                                 <div>
-                                    <div className="font-medium">
+                                    <div className="font-medium text-text-primary font-source-sans">
                                         {exercise.name}
                                     </div>
-                                    <div className="text-sm text-gray-600">
+                                    <div className="text-sm text-text-secondary font-source-sans">
                                         {exercise.targetSets} sets
                                         {exercise.targetReps &&
                                             ` × ${exercise.targetReps} reps`}
@@ -245,7 +245,7 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                                 <button
                                     type="button"
                                     onClick={() => removeExercise(index)}
-                                    className="text-red-600 hover:text-red-800 font-bold text-lg"
+                                    className="text-red-600/80 hover:text-red-600 font-bold text-lg"
                                 >
                                     ×
                                 </button>
@@ -259,13 +259,13 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                        className="flex-1 px-4 py-2 border border-accent-primary/30 text-text-primary rounded-lg hover:bg-background-secondary transition-colors font-medium font-source-sans"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
-                        className="flex-1 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-hover transition-colors font-medium"
+                        className="flex-1 bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium font-source-sans"
                     >
                         Create Workout
                     </button>

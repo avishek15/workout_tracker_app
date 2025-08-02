@@ -13,17 +13,17 @@ export default {
                     hover: "#B8941F",
                 },
                 background: {
-                    primary: "#0A0A0A",
-                    secondary: "#1A1A1A",
+                    primary: "#1A1A1A",
+                    secondary: "#2D2D2D",
                 },
                 accent: {
                     primary: "#A855F7",
                     secondary: "#D4AF37",
                 },
                 text: {
-                    primary: "#F5F5F5",
-                    secondary: "#E0E0E0",
-                    muted: "#A0A0A0",
+                    primary: "#F8F9FA",
+                    secondary: "#E9ECEF",
+                    muted: "#ADB5BD",
                 },
             },
             spacing: {

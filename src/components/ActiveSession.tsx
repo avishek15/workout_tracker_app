@@ -23,10 +23,10 @@ export function ActiveSession() {
         return (
             <div className="text-center py-12">
                 <div className="text-6xl mb-4">🏃‍♂️</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <h3 className="text-xl font-semibold text-text-primary mb-2 font-montserrat">
                     No Active Session
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-text-secondary font-source-sans">
                     Start a workout from your workout list to begin tracking.
                 </p>
             </div>

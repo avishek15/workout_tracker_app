@@ -20,11 +20,10 @@ export function WorkoutDashboard() {
     }, [activeSession, activeTab]);
 
     const tabs = [
-        { id: "workouts" as const, label: "Workouts", icon: "📋" },
+        { id: "workouts" as const, label: "Workouts" },
         {
             id: "active" as const,
             label: "Active Session",
-            icon: "🏃‍♂️",
             badge: activeSession ? "●" : null,
         },
     ];
@@ -32,22 +31,21 @@ export function WorkoutDashboard() {
     return (
         <div className="space-y-6">
             {/* Tab Navigation */}
-            <div className="flex space-x-1 bg-white rounded-lg p-1 shadow-sm border">
+            <div className="flex space-x-1 bg-background-primary rounded-lg p-1 shadow-sm border border-accent-primary/20">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium transition-colors font-source-sans ${
                             activeTab === tab.id
-                                ? "bg-primary text-white shadow-sm"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                ? "bg-accent-primary text-white shadow-sm"
+                                : "text-text-secondary hover:text-text-primary hover:bg-background-secondary"
                         }`}
                     >
-                        <span>{tab.icon}</span>
                         {tab.label}
                         {tab.badge && (
                             <span
-                                className={`text-xs ${activeTab === tab.id ? "text-white" : "text-green-500"}`}
+                                className={`text-xs ${activeTab === tab.id ? "text-white" : "text-accent-secondary"}`}
                             >
                                 {tab.badge}
                             </span>
@@ -57,7 +55,7 @@ export function WorkoutDashboard() {
             </div>
 
             {/* Tab Content */}
-            <div className="bg-white rounded-lg shadow-sm border min-h-[500px]">
+            <div className="bg-background-secondary rounded-lg shadow-sm border border-accent-primary/20 min-h-[500px]">
                 {activeTab === "workouts" && (
                     <div className="p-6">
                         {showCreateWorkout ? (

@@ -52,12 +52,12 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-text-primary font-montserrat">
                     Your Workouts
                 </h2>
                 <button
                     onClick={onCreateNew}
-                    className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-hover transition-colors font-medium"
+                    className="bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium font-source-sans"
                 >
                     + Create Workout
                 </button>
@@ -66,15 +66,15 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
             {workouts.length === 0 ? (
                 <div className="text-center py-12">
                     <div className="text-6xl mb-4">💪</div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    <h3 className="text-xl font-semibold text-text-primary mb-2 font-montserrat">
                         No workouts yet
                     </h3>
-                    <p className="text-gray-600 mb-6">
+                    <p className="text-text-secondary mb-6 font-source-sans">
                         Create your first workout to get started!
                     </p>
                     <button
                         onClick={onCreateNew}
-                        className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-hover transition-colors font-medium"
+                        className="bg-accent-primary text-white px-6 py-3 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium font-source-sans"
                     >
                         Create Your First Workout
                     </button>
@@ -89,25 +89,25 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                         return (
                             <div
                                 key={workout._id}
-                                className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all duration-200"
+                                className="bg-background-secondary border border-accent-primary/20 rounded-xl p-6 hover:shadow-lg transition-all duration-200"
                             >
                                 {/* Main Workout Header */}
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex-1">
-                                        <h3 className="text-xl font-bold text-gray-900 mb-1">
+                                        <h3 className="text-xl font-bold text-text-primary mb-1 font-montserrat">
                                             {workout.name}
                                         </h3>
                                         {workout.description && (
-                                            <p className="text-gray-600 text-sm">
+                                            <p className="text-text-secondary text-sm font-source-sans">
                                                 {workout.description}
                                             </p>
                                         )}
                                         <div className="flex items-center gap-4 mt-2">
-                                            <span className="text-sm text-gray-500">
+                                            <span className="text-sm text-text-muted font-source-sans">
                                                 {workout.exercises.length}{" "}
                                                 exercises
                                             </span>
-                                            <span className="text-sm text-gray-500">
+                                            <span className="text-sm text-text-muted font-source-sans">
                                                 {workout.exercises.reduce(
                                                     (total, ex) =>
                                                         total + ex.targetSets,
@@ -126,7 +126,7 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                                     workout._id
                                                 )
                                             }
-                                            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
+                                            className="bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium text-sm font-source-sans"
                                         >
                                             Start
                                         </button>
@@ -136,7 +136,7 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                                     workout._id
                                                 )
                                             }
-                                            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
+                                            className="bg-red-600/80 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors font-medium text-sm font-source-sans"
                                         >
                                             Delete
                                         </button>
@@ -146,14 +146,14 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                 {/* Exercise Preview */}
                                 <div className="mb-4">
                                     <div className="flex items-center justify-between">
-                                        <h4 className="font-medium text-gray-700 text-sm">
+                                        <h4 className="font-medium text-text-secondary text-sm font-source-sans">
                                             Exercise Preview:
                                         </h4>
                                         <button
                                             onClick={() =>
                                                 toggleExpanded(workout._id)
                                             }
-                                            className="text-primary hover:text-primary-hover text-sm font-medium transition-colors"
+                                            className="text-accent-primary hover:text-accent-primary/90 text-sm font-medium transition-colors font-source-sans underline"
                                         >
                                             {isExpanded
                                                 ? "Show less"
@@ -168,10 +168,10 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                                     key={index}
                                                     className="flex justify-between items-center text-sm"
                                                 >
-                                                    <span className="text-gray-700">
+                                                    <span className="text-text-primary font-source-sans">
                                                         {exercise.name}
                                                     </span>
-                                                    <span className="text-gray-500">
+                                                    <span className="text-text-muted font-source-sans">
                                                         {exercise.targetSets}{" "}
                                                         sets
                                                         {exercise.targetReps &&
@@ -181,7 +181,7 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                             )
                                         )}
                                         {hasMoreExercises && !isExpanded && (
-                                            <div className="text-sm text-gray-500 italic">
+                                            <div className="text-sm text-text-muted italic font-source-sans">
                                                 +{workout.exercises.length - 3}{" "}
                                                 more exercises
                                             </div>
@@ -192,7 +192,7 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                 {/* Expanded Details */}
                                 {isExpanded && (
                                     <div className="border-t pt-4 mt-4">
-                                        <h4 className="font-medium text-gray-700 mb-3">
+                                        <h4 className="font-medium text-text-secondary mb-3 font-source-sans">
                                             All Exercises:
                                         </h4>
                                         <div className="grid gap-2">
@@ -200,13 +200,13 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                                 (exercise, index) => (
                                                     <div
                                                         key={index}
-                                                        className="bg-gray-50 rounded-lg p-3"
+                                                        className="bg-background-secondary rounded-lg p-3 border border-accent-primary/10"
                                                     >
                                                         <div className="flex justify-between items-center">
-                                                            <span className="font-medium text-gray-900">
+                                                            <span className="font-medium text-text-primary font-source-sans">
                                                                 {exercise.name}
                                                             </span>
-                                                            <div className="text-sm text-gray-600">
+                                                            <div className="text-sm text-text-secondary font-source-sans">
                                                                 {
                                                                     exercise.targetSets
                                                                 }{" "}
