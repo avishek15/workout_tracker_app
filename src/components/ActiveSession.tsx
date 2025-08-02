@@ -87,7 +87,7 @@ export function ActiveSession() {
                 sessionId: activeSession._id as any,
                 notes: notes.trim() || undefined,
             });
-            toast.success("Workout completed! Great job! 💪");
+            toast.success("Workout completed! Great job!");
             setShowCompleteDialog(false);
         } catch (error) {
             toast.error("Failed to complete session");
@@ -127,83 +127,92 @@ export function ActiveSession() {
     const totalSets = activeSession.sets.length;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-20">
             {/* Session Header */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                <div className="flex justify-between items-start mb-4">
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-900">
-                            {activeSession.workout?.name}
-                        </h2>
-                        <p className="text-gray-600">
-                            Started {formatDuration(activeSession.startTime)}{" "}
-                            ago
-                        </p>
-                    </div>
-                    <div className="text-right">
-                        <div className="text-2xl font-bold text-green-600">
-                            {completedSets}/{totalSets}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-6 relative overflow-hidden">
+                {/* Animated background overlay */}
+                <div className="absolute inset-0 bg-green-100 opacity-0 animate-pulse-slow pointer-events-none"></div>
+                {/* Content */}
+                <div className="relative z-10">
+                    <div className="flex justify-between items-start gap-4 mb-4">
+                        <div className="flex-1">
+                            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                                {activeSession.workout?.name}
+                            </h2>
+                            <p className="text-gray-600 text-sm sm:text-base">
+                                Started{" "}
+                                {formatDuration(activeSession.startTime)} ago
+                            </p>
                         </div>
-                        <div className="text-sm text-gray-600">
-                            sets completed
+                        <div className="text-right flex-shrink-0">
+                            <div className="text-2xl sm:text-3xl font-bold text-green-600">
+                                {completedSets}/{totalSets}
+                            </div>
+                            <div className="text-sm sm:text-base text-gray-600">
+                                sets completed
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div className="flex gap-3">
-                    <button
-                        onClick={() => setShowCompleteDialog(true)}
-                        className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
-                    >
-                        Complete Workout
-                    </button>
-                    <button
-                        onClick={() => void handleCancelSession()}
-                        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium"
-                    >
-                        Cancel
-                    </button>
                 </div>
             </div>
 
             {/* Exercises */}
             <div className="space-y-6">
                 {exerciseGroups.map((exercise, exerciseIndex) => (
-                    <div key={exerciseIndex} className="border rounded-lg p-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-semibold text-gray-900">
-                                {exercise.name}
-                            </h3>
-                            <button
-                                onClick={() => void handleAddSet(exercise.name)}
-                                className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
-                            >
-                                + Add Set
-                            </button>
+                    <div key={exerciseIndex}>
+                        <div className="border rounded-lg p-4 sm:p-6">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 capitalize">
+                                    {exercise.name}
+                                </h3>
+                            </div>
+
+                            <div className="space-y-3">
+                                {exercise.sets.map((set, setIndex) => (
+                                    <SetRow
+                                        key={set._id}
+                                        set={set}
+                                        setNumber={setIndex + 1}
+                                        onUpdate={(setId, reps, weight) =>
+                                            void handleUpdateSet(
+                                                setId,
+                                                reps,
+                                                weight
+                                            )
+                                        }
+                                        onComplete={(setId) =>
+                                            void handleCompleteSet(setId)
+                                        }
+                                        onRemove={(setId) =>
+                                            void handleRemoveSet(setId)
+                                        }
+                                    />
+                                ))}
+                            </div>
+
+                            {/* Add Set Button at Bottom */}
+                            <div className="mt-4 pt-4 border-t border-gray-200">
+                                <button
+                                    onClick={() =>
+                                        void handleAddSet(exercise.name)
+                                    }
+                                    className="w-full bg-accent-primary text-white px-4 py-3 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium"
+                                >
+                                    + Add Set
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="space-y-3">
-                            {exercise.sets.map((set, setIndex) => (
-                                <SetRow
-                                    key={set._id}
-                                    set={set}
-                                    setNumber={setIndex + 1}
-                                    onUpdate={(setId, reps, weight) =>
-                                        void handleUpdateSet(
-                                            setId,
-                                            reps,
-                                            weight
-                                        )
-                                    }
-                                    onComplete={(setId) =>
-                                        void handleCompleteSet(setId)
-                                    }
-                                    onRemove={(setId) =>
-                                        void handleRemoveSet(setId)
-                                    }
-                                />
-                            ))}
-                        </div>
+                        {/* Exercise Separator */}
+                        {exerciseIndex < exerciseGroups.length - 1 && (
+                            <div className="flex items-center justify-center py-4">
+                                <div className="w-16 h-px bg-gray-300"></div>
+                                <div className="mx-4 text-xs text-gray-500 font-medium uppercase tracking-wider">
+                                    Next Exercise
+                                </div>
+                                <div className="w-16 h-px bg-gray-300"></div>
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>
@@ -211,7 +220,7 @@ export function ActiveSession() {
             {/* Complete Dialog */}
             {showCompleteDialog && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                    <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md mx-4">
                         <h3 className="text-lg font-semibold mb-4">
                             Complete Workout
                         </h3>
@@ -228,16 +237,16 @@ export function ActiveSession() {
                                     placeholder="How did the workout go?"
                                 />
                             </div>
-                            <div className="flex gap-3">
+                            <div className="flex flex-col sm:flex-row gap-3">
                                 <button
                                     onClick={() => setShowCompleteDialog(false)}
-                                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                    className="w-full sm:flex-1 px-4 py-3 sm:py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={() => void handleCompleteSession()}
-                                    className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                                    className="w-full sm:flex-1 bg-accent-primary text-white px-4 py-3 sm:py-2 rounded-lg hover:bg-accent-primary/90 transition-colors"
                                 >
                                     Complete
                                 </button>
@@ -246,6 +255,24 @@ export function ActiveSession() {
                     </div>
                 </div>
             )}
+
+            {/* Floating Action Bar */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-300 shadow-lg z-40 px-4 py-3">
+                <div className="max-w-7xl mx-auto flex gap-3">
+                    <button
+                        onClick={() => void handleCancelSession()}
+                        className="flex-1 bg-danger text-white px-4 py-3 rounded-lg hover:bg-danger-hover transition-all duration-200 font-medium shadow-md hover:shadow-lg sm:text-base"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={() => setShowCompleteDialog(true)}
+                        className="flex-1 bg-accent-primary text-white px-4 py-3 rounded-lg hover:bg-accent-primary/90 transition-all duration-200 font-medium shadow-md hover:shadow-lg sm:text-base"
+                    >
+                        Complete Workout
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }
@@ -274,65 +301,70 @@ function SetRow({
 
     return (
         <div
-            className={`flex items-center gap-3 p-3 rounded-lg border ${
+            className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 rounded-lg border ${
                 set.completed
                     ? "bg-green-50 border-green-200"
                     : "bg-gray-50 border-gray-200"
             }`}
         >
-            <div className="w-8 text-center font-medium text-gray-600">
+            {/* Set Number */}
+            <div className="w-8 text-center font-medium text-gray-600 flex-shrink-0">
                 {setNumber}
             </div>
 
-            <div className="flex items-center gap-2">
-                <input
-                    type="number"
-                    min="0"
-                    value={reps}
-                    onChange={(e) => setReps(parseInt(e.target.value) || 0)}
-                    onBlur={handleUpdate}
-                    className="w-16 px-3 py-1 border border-gray-300 rounded text-center"
-                    disabled={set.completed}
-                />
-                <span className="text-sm text-gray-600">reps</span>
+            {/* Input Fields */}
+            <div className="flex flex-col sm:flex-row gap-3 flex-1">
+                <div className="flex items-center gap-2">
+                    <input
+                        type="number"
+                        min="0"
+                        value={reps}
+                        onChange={(e) => setReps(parseInt(e.target.value) || 0)}
+                        onBlur={handleUpdate}
+                        className="w-20 sm:w-16 px-3 py-2 sm:py-1 border border-gray-300 rounded text-center"
+                        disabled={set.completed}
+                    />
+                    <span className="text-sm text-gray-600">reps</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <input
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        value={weight}
+                        onChange={(e) => setWeight(e.target.value)}
+                        onBlur={handleUpdate}
+                        className="w-24 sm:w-20 px-3 py-2 sm:py-1 border border-gray-300 rounded text-center"
+                        placeholder="0"
+                        disabled={set.completed}
+                    />
+                    <span className="text-sm text-gray-600">lbs</span>
+                </div>
             </div>
 
-            <div className="flex items-center gap-2">
-                <input
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    value={weight}
-                    onChange={(e) => setWeight(e.target.value)}
-                    onBlur={handleUpdate}
-                    className="w-20 px-3 py-1 border border-gray-300 rounded text-center"
-                    placeholder="0"
-                    disabled={set.completed}
-                />
-                <span className="text-sm text-gray-600">lbs</span>
-            </div>
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+                {!set.completed ? (
+                    <button
+                        onClick={() => void onComplete(set._id)}
+                        className="flex-1 sm:flex-none bg-accent-primary text-white px-4 py-2 rounded text-sm hover:bg-accent-primary/90 transition-colors"
+                    >
+                        ✓ Done
+                    </button>
+                ) : (
+                    <span className="flex-1 sm:flex-none text-green-600 font-medium text-sm text-center">
+                        ✓ Completed
+                    </span>
+                )}
 
-            <div className="flex-1"></div>
-
-            {!set.completed ? (
                 <button
-                    onClick={() => void onComplete(set._id)}
-                    className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors"
+                    onClick={() => void onRemove(set._id)}
+                    className="text-danger hover:text-danger-hover font-bold text-lg px-2 py-1"
                 >
-                    ✓ Done
+                    ×
                 </button>
-            ) : (
-                <span className="text-green-600 font-medium text-sm">
-                    ✓ Completed
-                </span>
-            )}
-
-            <button
-                onClick={() => void onRemove(set._id)}
-                className="text-red-600 hover:text-red-800 font-bold"
-            >
-                ×
-            </button>
+            </div>
         </div>
     );
 }

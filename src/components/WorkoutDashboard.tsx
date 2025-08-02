@@ -36,16 +36,16 @@ export function WorkoutDashboard() {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium transition-colors font-source-sans ${
+                        className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-md font-medium transition-colors font-source-sans text-sm sm:text-base ${
                             activeTab === tab.id
                                 ? "bg-accent-primary text-white shadow-sm"
                                 : "text-text-secondary hover:text-text-primary hover:bg-background-secondary"
                         }`}
                     >
-                        {tab.label}
+                        <span className="truncate">{tab.label}</span>
                         {tab.badge && (
                             <span
-                                className={`text-xs ${activeTab === tab.id ? "text-white" : "text-accent-secondary"}`}
+                                className={`text-xs flex-shrink-0 ${activeTab === tab.id ? "text-white" : "text-accent-secondary"}`}
                             >
                                 {tab.badge}
                             </span>
@@ -55,9 +55,9 @@ export function WorkoutDashboard() {
             </div>
 
             {/* Tab Content */}
-            <div className="bg-background-secondary rounded-lg shadow-sm border border-accent-primary/20 min-h-[500px]">
+            <div className="bg-background-secondary rounded-lg shadow-sm border border-accent-primary/20 min-h-[400px] sm:min-h-[500px]">
                 {activeTab === "workouts" && (
-                    <div className="p-6">
+                    <div className="p-4 sm:p-6">
                         {showCreateWorkout ? (
                             <CreateWorkout
                                 onClose={() => setShowCreateWorkout(false)}
@@ -71,7 +71,7 @@ export function WorkoutDashboard() {
                 )}
 
                 {activeTab === "active" && (
-                    <div className="p-6">
+                    <div className="p-4 sm:p-6">
                         <ActiveSession />
                     </div>
                 )}

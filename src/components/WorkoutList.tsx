@@ -52,13 +52,13 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-text-primary font-montserrat">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-text-primary font-montserrat">
                     Your Workouts
                 </h2>
                 <button
                     onClick={onCreateNew}
-                    className="bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium font-source-sans"
+                    className="w-full sm:w-auto bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium font-source-sans"
                 >
                     + Create Workout
                 </button>
@@ -92,12 +92,12 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                         return (
                             <div
                                 key={workout._id}
-                                className="bg-background-secondary border border-accent-primary/20 rounded-xl p-6 hover:shadow-lg transition-all duration-200"
+                                className="bg-background-secondary border border-accent-primary/20 rounded-xl p-4 sm:p-6 hover:shadow-lg transition-all duration-200"
                             >
                                 {/* Main Workout Header */}
-                                <div className="flex justify-between items-start mb-4">
+                                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
                                     <div className="flex-1">
-                                        <h3 className="text-xl font-bold text-text-primary mb-1 font-montserrat">
+                                        <h3 className="text-lg sm:text-xl font-bold text-text-primary mb-1 font-montserrat">
                                             {workout.name}
                                         </h3>
                                         {workout.description && (
@@ -105,7 +105,7 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                                 {workout.description}
                                             </p>
                                         )}
-                                        <div className="flex items-center gap-4 mt-2">
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2">
                                             <span className="text-sm text-text-muted font-source-sans">
                                                 {workout.exercises.length}{" "}
                                                 exercises
@@ -122,14 +122,14 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                     </div>
 
                                     {/* Action Buttons */}
-                                    <div className="flex gap-2 ml-4">
+                                    <div className="flex gap-2 w-full sm:w-auto">
                                         <button
                                             onClick={() =>
                                                 void handleStartWorkout(
                                                     workout._id
                                                 )
                                             }
-                                            className="bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium text-sm font-source-sans"
+                                            className="flex-1 sm:flex-none bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium text-sm font-source-sans"
                                         >
                                             Start
                                         </button>
@@ -139,7 +139,7 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                                     workout._id
                                                 )
                                             }
-                                            className="bg-red-600/80 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors font-medium text-sm font-source-sans"
+                                            className="flex-1 sm:flex-none bg-danger text-white px-4 py-2 rounded-lg hover:bg-danger-hover transition-colors font-medium text-sm font-source-sans"
                                         >
                                             Delete
                                         </button>
@@ -148,7 +148,7 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
 
                                 {/* Exercise Preview */}
                                 <div className="mb-4">
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                         <h4 className="font-medium text-text-secondary text-sm font-source-sans">
                                             Exercise Preview:
                                         </h4>
@@ -156,7 +156,7 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                             onClick={() =>
                                                 toggleExpanded(workout._id)
                                             }
-                                            className="text-accent-primary hover:text-accent-primary/90 text-sm font-medium transition-colors font-source-sans underline"
+                                            className="text-accent-primary hover:text-accent-primary/90 text-sm font-medium transition-colors font-source-sans underline self-start sm:self-auto"
                                         >
                                             {isExpanded
                                                 ? "Show less"
@@ -169,12 +169,17 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                             (exercise, index) => (
                                                 <div
                                                     key={index}
-                                                    className="flex justify-between items-center text-sm"
+                                                    className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0 text-sm"
                                                 >
-                                                    <span className="text-text-primary font-source-sans">
-                                                        {exercise.name}
+                                                    <span className="text-text-primary font-source-sans truncate">
+                                                        {exercise.name
+                                                            .charAt(0)
+                                                            .toUpperCase() +
+                                                            exercise.name.slice(
+                                                                1
+                                                            )}
                                                     </span>
-                                                    <span className="text-text-muted font-source-sans">
+                                                    <span className="text-text-muted font-source-sans text-xs sm:text-sm">
                                                         {exercise.targetSets}{" "}
                                                         sets
                                                         {exercise.targetReps &&
@@ -207,7 +212,12 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                                     >
                                                         <div className="flex justify-between items-center">
                                                             <span className="font-medium text-text-primary font-source-sans">
-                                                                {exercise.name}
+                                                                {exercise.name
+                                                                    .charAt(0)
+                                                                    .toUpperCase() +
+                                                                    exercise.name.slice(
+                                                                        1
+                                                                    )}
                                                             </span>
                                                             <div className="text-sm text-text-secondary font-source-sans">
                                                                 {

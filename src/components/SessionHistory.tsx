@@ -189,7 +189,7 @@ export function SessionHistory() {
                             <div className="flex gap-3 mt-6">
                                 <button
                                     onClick={() => handleViewDetails(session)}
-                                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+                                    className="bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium text-sm"
                                 >
                                     View Details
                                 </button>
@@ -197,7 +197,7 @@ export function SessionHistory() {
                                     onClick={() =>
                                         void handleDeleteSession(session._id)
                                     }
-                                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
+                                    className="bg-danger text-white px-4 py-2 rounded-lg hover:bg-danger-hover transition-colors font-medium text-sm"
                                 >
                                     Delete
                                 </button>
@@ -303,44 +303,45 @@ function SessionDetailsModal({ session, onClose }: SessionDetailsModalProps) {
                                     {sets.map((set: any, index: number) => (
                                         <div
                                             key={set._id}
-                                            className={`flex items-center gap-4 p-3 rounded-lg ${
+                                            className={`flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 p-3 rounded-lg ${
                                                 set.completed
                                                     ? "bg-green-50 border border-green-200"
                                                     : "bg-gray-50 border border-gray-200"
                                             }`}
                                         >
-                                            <div className="w-8 text-center font-medium text-gray-600">
+                                            <div className="w-8 text-center font-medium text-gray-600 flex-shrink-0">
                                                 {index + 1}
                                             </div>
-                                            <div className="flex items-center gap-4">
-                                                <span className="text-gray-700">
+                                            <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+                                                <span className="text-gray-700 text-sm sm:text-base">
                                                     {set.reps} reps
                                                 </span>
                                                 {set.weight !== undefined && (
-                                                    <span className="text-gray-700">
+                                                    <span className="text-gray-700 text-sm sm:text-base">
                                                         {set.weight} lbs
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="flex-1"></div>
-                                            <div
-                                                className={`text-sm font-medium ${
-                                                    set.completed
-                                                        ? "text-green-600"
-                                                        : "text-gray-500"
-                                                }`}
-                                            >
-                                                {set.completed
-                                                    ? "✓ Completed"
-                                                    : "○ Incomplete"}
-                                            </div>
-                                            {set.completedAt && (
-                                                <div className="text-xs text-gray-500">
-                                                    {formatTime(
-                                                        set.completedAt
-                                                    )}
+                                            <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                                                <div
+                                                    className={`text-sm font-medium ${
+                                                        set.completed
+                                                            ? "text-green-600"
+                                                            : "text-gray-500"
+                                                    }`}
+                                                >
+                                                    {set.completed
+                                                        ? "✓ Completed"
+                                                        : "○ Incomplete"}
                                                 </div>
-                                            )}
+                                                {set.completedAt && (
+                                                    <div className="text-xs text-gray-500">
+                                                        {formatTime(
+                                                            set.completedAt
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -352,7 +353,7 @@ function SessionDetailsModal({ session, onClose }: SessionDetailsModalProps) {
                 <div className="mt-6 flex justify-end">
                     <button
                         onClick={onClose}
-                        className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                        className="bg-danger text-white px-6 py-2 rounded-lg hover:bg-danger-hover transition-colors font-medium"
                     >
                         Close
                     </button>

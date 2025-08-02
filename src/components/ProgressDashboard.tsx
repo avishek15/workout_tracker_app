@@ -68,19 +68,19 @@ export function ProgressDashboard() {
     }
 
     return (
-        <div className="p-8 space-y-8">
+        <div className="p-4 sm:p-8 space-y-6 sm:space-y-8">
             {/* Header with Controls */}
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
                     Progress Analytics
                 </h2>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
                     <select
                         value={timeRange}
                         onChange={(e) =>
                             setTimeRange(e.target.value as TimeRange)
                         }
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-base"
                     >
                         <option value="week">Last Week</option>
                         <option value="month">Last Month</option>
@@ -90,12 +90,13 @@ export function ProgressDashboard() {
                     <select
                         value={selectedExercise}
                         onChange={(e) => setSelectedExercise(e.target.value)}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-base"
                     >
                         <option value="">All Exercises</option>
                         {exercises.map((exercise) => (
                             <option key={exercise} value={exercise}>
-                                {exercise}
+                                {exercise.charAt(0).toUpperCase() +
+                                    exercise.slice(1)}
                             </option>
                         ))}
                     </select>
@@ -103,23 +104,23 @@ export function ProgressDashboard() {
             </div>
 
             {/* Key Metrics Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white p-4 rounded-lg border shadow-sm">
-                    <h3 className="text-sm font-medium text-gray-500">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+                <div className="bg-white p-3 sm:p-4 rounded-lg border shadow-sm">
+                    <h3 className="text-xs sm:text-sm font-medium text-gray-500">
                         Total Workouts
                     </h3>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
                         {workoutFrequency?.reduce(
                             (sum, item) => sum + item.count,
                             0
                         ) || 0}
                     </p>
                 </div>
-                <div className="bg-white p-4 rounded-lg border shadow-sm">
-                    <h3 className="text-sm font-medium text-gray-500">
+                <div className="bg-white p-3 sm:p-4 rounded-lg border shadow-sm">
+                    <h3 className="text-xs sm:text-sm font-medium text-gray-500">
                         Avg Completion Rate
                     </h3>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
                         {completionRates && completionRates.length > 0
                             ? Math.round(
                                   completionRates.reduce(
@@ -131,35 +132,39 @@ export function ProgressDashboard() {
                         %
                     </p>
                 </div>
-                <div className="bg-white p-4 rounded-lg border shadow-sm">
-                    <h3 className="text-sm font-medium text-gray-500">
+                <div className="bg-white p-3 sm:p-4 rounded-lg border shadow-sm">
+                    <h3 className="text-xs sm:text-sm font-medium text-gray-500">
                         Total Volume
                     </h3>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
                         {totalVolume
                             ?.reduce((sum, item) => sum + item.volume, 0)
                             .toLocaleString() || 0}
                     </p>
                 </div>
-                <div className="bg-white p-4 rounded-lg border shadow-sm">
-                    <h3 className="text-sm font-medium text-gray-500">
+                <div className="bg-white p-3 sm:p-4 rounded-lg border shadow-sm">
+                    <h3 className="text-xs sm:text-sm font-medium text-gray-500">
                         Exercises Tracked
                     </h3>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
                         {exercises?.length || 0}
                     </p>
                 </div>
             </div>
 
             {/* Charts Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                 {/* Weight Progress Chart */}
                 {selectedExercise && (
-                    <div className="bg-white p-6 rounded-lg border shadow-sm">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    <div className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                             Weight Progress - {selectedExercise}
                         </h3>
-                        <ResponsiveContainer width="100%" height={300}>
+                        <ResponsiveContainer
+                            width="100%"
+                            height={250}
+                            className="sm:h-[300px]"
+                        >
                             <LineChart
                                 data={formatChartData(weightProgress || [])}
                             >
@@ -185,11 +190,15 @@ export function ProgressDashboard() {
 
                 {/* Volume Progress Chart */}
                 {selectedExercise && (
-                    <div className="bg-white p-6 rounded-lg border shadow-sm">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    <div className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                             Volume Progress - {selectedExercise}
                         </h3>
-                        <ResponsiveContainer width="100%" height={300}>
+                        <ResponsiveContainer
+                            width="100%"
+                            height={250}
+                            className="sm:h-[300px]"
+                        >
                             <LineChart
                                 data={formatChartData(volumeProgress || [])}
                             >
@@ -214,11 +223,15 @@ export function ProgressDashboard() {
                 )}
 
                 {/* Workout Frequency Chart */}
-                <div className="bg-white p-6 rounded-lg border shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <div className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                         Workout Frequency
                     </h3>
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer
+                        width="100%"
+                        height={250}
+                        className="sm:h-[300px]"
+                    >
                         <BarChart data={workoutFrequency || []}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="period" />
@@ -230,11 +243,15 @@ export function ProgressDashboard() {
                 </div>
 
                 {/* Total Volume Chart */}
-                <div className="bg-white p-6 rounded-lg border shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <div className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                         Total Volume per Workout
                     </h3>
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer
+                        width="100%"
+                        height={250}
+                        className="sm:h-[300px]"
+                    >
                         <LineChart data={formatChartData(totalVolume || [])}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="date" />
@@ -252,11 +269,15 @@ export function ProgressDashboard() {
                 </div>
 
                 {/* Completion Rate Chart */}
-                <div className="bg-white p-6 rounded-lg border shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <div className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                         Completion Rate
                     </h3>
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer
+                        width="100%"
+                        height={250}
+                        className="sm:h-[300px]"
+                    >
                         <LineChart
                             data={formatChartData(completionRates || [])}
                         >
@@ -276,11 +297,15 @@ export function ProgressDashboard() {
                 </div>
 
                 {/* Exercise Distribution */}
-                <div className="bg-white p-6 rounded-lg border shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <div className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                         Exercise Distribution
                     </h3>
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer
+                        width="100%"
+                        height={250}
+                        className="sm:h-[300px]"
+                    >
                         <PieChart>
                             <Pie
                                 data={
@@ -311,11 +336,11 @@ export function ProgressDashboard() {
             </div>
 
             {/* Data Summary */}
-            <div className="bg-white p-8 rounded-lg border shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="bg-white p-4 sm:p-8 rounded-lg border shadow-sm">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                     Data Summary
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 text-sm">
                     {selectedExercise && (
                         <div>
                             <h4 className="font-medium text-gray-700">
