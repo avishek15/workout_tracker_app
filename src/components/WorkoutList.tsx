@@ -172,7 +172,12 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                                     className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0 text-sm"
                                                 >
                                                     <span className="text-text-primary font-source-sans truncate">
-                                                        {exercise.name}
+                                                        {exercise.name
+                                                            .charAt(0)
+                                                            .toUpperCase() +
+                                                            exercise.name.slice(
+                                                                1
+                                                            )}
                                                     </span>
                                                     <span className="text-text-muted font-source-sans text-xs sm:text-sm">
                                                         {exercise.targetSets}{" "}
@@ -207,7 +212,12 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                                     >
                                                         <div className="flex justify-between items-center">
                                                             <span className="font-medium text-text-primary font-source-sans">
-                                                                {exercise.name}
+                                                                {exercise.name
+                                                                    .charAt(0)
+                                                                    .toUpperCase() +
+                                                                    exercise.name.slice(
+                                                                        1
+                                                                    )}
                                                             </span>
                                                             <div className="text-sm text-text-secondary font-source-sans">
                                                                 {

@@ -252,9 +252,9 @@ export function Profile() {
     }
 
     return (
-        <div className="p-8 space-y-8">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-text-primary font-montserrat">
+        <div className="p-4 sm:p-8 space-y-6 sm:space-y-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-text-primary font-montserrat">
                     Profile Settings
                 </h2>
                 <button
@@ -265,7 +265,7 @@ export function Profile() {
                 </button>
             </div>
 
-            <div className="max-w-2xl space-y-8">
+            <div className="max-w-md sm:max-w-lg lg:max-w-xl mx-auto space-y-6 sm:space-y-8">
                 {/* Profile Image Section */}
                 <div className="text-center">
                     <div className="relative inline-block">
