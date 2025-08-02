@@ -1,6 +1,7 @@
 import { useConvexAuth } from "convex/react";
 import { SignInForm } from "./components/SignInForm";
 import { SignOutButton } from "./components/SignOutButton";
+import { UserProfileHeader } from "./components/UserProfileHeader";
 import { WorkoutDashboard } from "./components/WorkoutDashboard";
 import { ProgressDashboard } from "./components/ProgressDashboard";
 import { SessionHistory } from "./components/SessionHistory";
@@ -62,7 +63,11 @@ function App() {
                             </h1>
                         </div>
                         <div className="flex items-center space-x-4">
-                            <SignOutButton />
+                            <UserProfileHeader
+                                onNavigateToProfile={() =>
+                                    setActiveTab("profile")
+                                }
+                            />
                         </div>
                     </div>
                 </div>
