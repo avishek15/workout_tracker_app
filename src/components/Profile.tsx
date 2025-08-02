@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { User, Camera, Save, AlertCircle } from "lucide-react";
+import { useAuthActions } from "@convex-dev/auth/react";
 
 export function Profile() {
     const [name, setName] = useState("");
@@ -13,6 +14,7 @@ export function Profile() {
 
     const profile = useQuery(api.users.getProfile);
     const updateProfile = useMutation(api.users.updateProfile);
+    const { signOut } = useAuthActions();
 
     // Pre-fill form with user data when it loads
     useEffect(() => {
@@ -75,7 +77,7 @@ export function Profile() {
                         your profile information, please sign up for an account.
                     </p>
                     <button
-                        onClick={() => (window.location.href = "/")}
+                        onClick={() => void signOut()}
                         className="bg-accent-primary text-white px-6 py-3 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium font-source-sans"
                     >
                         Sign Up

@@ -2,6 +2,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { useState } from "react";
+import { Dumbbell } from "lucide-react";
 
 interface WorkoutListProps {
     onCreateNew: () => void;
@@ -65,7 +66,9 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
 
             {workouts.length === 0 ? (
                 <div className="text-center py-12">
-                    <div className="text-6xl mb-4">💪</div>
+                    <div className="w-16 h-16 bg-accent-primary rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Dumbbell className="w-8 h-8 text-white" />
+                    </div>
                     <h3 className="text-xl font-semibold text-text-primary mb-2 font-montserrat">
                         No workouts yet
                     </h3>
