@@ -189,7 +189,7 @@ export function SessionHistory() {
                             <div className="flex gap-3 mt-6">
                                 <button
                                     onClick={() => handleViewDetails(session)}
-                                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+                                    className="bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium text-sm"
                                 >
                                     View Details
                                 </button>
@@ -197,7 +197,7 @@ export function SessionHistory() {
                                     onClick={() =>
                                         void handleDeleteSession(session._id)
                                     }
-                                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
+                                    className="bg-danger text-white px-4 py-2 rounded-lg hover:bg-danger-hover transition-colors font-medium text-sm"
                                 >
                                     Delete
                                 </button>

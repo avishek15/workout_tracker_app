@@ -246,7 +246,7 @@ export function ActiveSession() {
                                 </button>
                                 <button
                                     onClick={() => void handleCompleteSession()}
-                                    className="w-full sm:flex-1 bg-green-600 text-white px-4 py-3 sm:py-2 rounded-lg hover:bg-green-700 transition-colors"
+                                    className="w-full sm:flex-1 bg-accent-primary text-white px-4 py-3 sm:py-2 rounded-lg hover:bg-accent-primary/90 transition-colors"
                                 >
                                     Complete
                                 </button>
@@ -257,17 +257,17 @@ export function ActiveSession() {
             )}
 
             {/* Floating Action Bar */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40 px-4 py-3">
+            <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-300 shadow-lg z-40 px-4 py-3">
                 <div className="max-w-7xl mx-auto flex gap-3">
                     <button
                         onClick={() => void handleCancelSession()}
-                        className="flex-1 bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition-colors font-medium"
+                        className="flex-1 bg-danger text-white px-4 py-3 rounded-lg hover:bg-danger-hover transition-all duration-200 font-medium shadow-md hover:shadow-lg sm:text-base"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={() => setShowCompleteDialog(true)}
-                        className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
+                        className="flex-1 bg-accent-primary text-white px-4 py-3 rounded-lg hover:bg-accent-primary/90 transition-all duration-200 font-medium shadow-md hover:shadow-lg sm:text-base"
                     >
                         Complete Workout
                     </button>
@@ -348,7 +348,7 @@ function SetRow({
                 {!set.completed ? (
                     <button
                         onClick={() => void onComplete(set._id)}
-                        className="flex-1 sm:flex-none bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition-colors"
+                        className="flex-1 sm:flex-none bg-accent-primary text-white px-4 py-2 rounded text-sm hover:bg-accent-primary/90 transition-colors"
                     >
                         ✓ Done
                     </button>
@@ -360,7 +360,7 @@ function SetRow({
 
                 <button
                     onClick={() => void onRemove(set._id)}
-                    className="text-red-600 hover:text-red-800 font-bold text-lg px-2 py-1"
+                    className="text-danger hover:text-danger-hover font-bold text-lg px-2 py-1"
                 >
                     ×
                 </button>

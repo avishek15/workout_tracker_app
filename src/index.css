@@ -14,6 +14,11 @@
     --color-text-secondary: #7a6b53;
     --color-text-muted: #9a8b73;
 
+    /* Muted Red - Au Chico */
+    --color-danger: #713b35;
+    --color-danger-hover: #8a4a42;
+    --color-danger-light: #8a4a42;
+
     /* Legacy support for existing components */
     --color-light: #e8e0d5;
     --color-dark: #5d4e37;
@@ -89,4 +94,42 @@ h6 {
 /* gap for auth form fields */
 .gap-form-field {
     @apply gap-4;
+}
+
+/* Muted Red - Au Chico Utility Classes */
+.bg-danger {
+    background-color: var(--color-danger);
+}
+
+.bg-danger-hover {
+    background-color: var(--color-danger-hover);
+}
+
+.bg-danger-light {
+    background-color: var(--color-danger-light);
+}
+
+.text-danger {
+    color: var(--color-danger);
+}
+
+.text-danger-hover {
+    color: var(--color-danger-hover);
+}
+
+.border-danger {
+    border-color: var(--color-danger);
+}
+
+.border-danger-focus {
+    border-color: var(--color-danger);
+}
+
+/* Hover states */
+.hover\:bg-danger:hover {
+    background-color: var(--color-danger-hover);
+}
+
+.hover\:text-danger:hover {
+    color: var(--color-danger-hover);
 }

@@ -139,7 +139,7 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                                     workout._id
                                                 )
                                             }
-                                            className="flex-1 sm:flex-none bg-red-600/80 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors font-medium text-sm font-source-sans"
+                                            className="flex-1 sm:flex-none bg-danger/80 text-white px-4 py-2 rounded-lg hover:bg-danger transition-colors font-medium text-sm font-source-sans"
                                         >
                                             Delete
                                         </button>

@@ -245,7 +245,7 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                                 <button
                                     type="button"
                                     onClick={() => removeExercise(index)}
-                                    className="text-red-600/80 hover:text-red-600 font-bold text-lg"
+                                    className="text-danger/80 hover:text-danger font-bold text-lg"
                                 >
                                     ×
                                 </button>

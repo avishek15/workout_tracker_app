@@ -325,13 +325,13 @@ export function Profile() {
                             disabled={!isEditing}
                             className={`w-full px-4 py-3 rounded-lg bg-background-primary border focus:ring-1 focus:ring-accent-primary outline-none transition-colors text-text-primary placeholder-text-muted disabled:opacity-50 disabled:cursor-not-allowed font-source-sans ${
                                 validationErrors.name
-                                    ? "border-red-500 focus:border-red-500"
+                                    ? "border-danger focus:border-danger"
                                     : "border-accent-primary/30 focus:border-accent-primary"
                             }`}
                             placeholder="Enter your full name"
                         />
                         {validationErrors.name && (
-                            <p className="text-red-500 text-sm mt-1 font-source-sans">
+                            <p className="text-danger text-sm mt-1 font-source-sans">
                                 {validationErrors.name}
                             </p>
                         )}
@@ -348,13 +348,13 @@ export function Profile() {
                             disabled={!isEditing}
                             className={`w-full px-4 py-3 rounded-lg bg-background-primary border focus:ring-1 focus:ring-accent-primary outline-none transition-colors text-text-primary placeholder-text-muted disabled:opacity-50 disabled:cursor-not-allowed font-source-sans ${
                                 validationErrors.email
-                                    ? "border-red-500 focus:border-red-500"
+                                    ? "border-danger focus:border-danger"
                                     : "border-accent-primary/30 focus:border-accent-primary"
                             }`}
                             placeholder="Enter your email address"
                         />
                         {validationErrors.email && (
-                            <p className="text-red-500 text-sm mt-1 font-source-sans">
+                            <p className="text-danger text-sm mt-1 font-source-sans">
                                 {validationErrors.email}
                             </p>
                         )}
@@ -371,13 +371,13 @@ export function Profile() {
                             rows={4}
                             className={`w-full px-4 py-3 rounded-lg bg-background-primary border focus:ring-1 focus:ring-accent-primary outline-none transition-colors text-text-primary placeholder-text-muted disabled:opacity-50 disabled:cursor-not-allowed font-source-sans resize-none ${
                                 validationErrors.bio
-                                    ? "border-red-500 focus:border-red-500"
+                                    ? "border-danger focus:border-danger"
                                     : "border-accent-primary/30 focus:border-accent-primary"
                             }`}
                             placeholder="Tell us about yourself..."
                         />
                         {validationErrors.bio && (
-                            <p className="text-red-500 text-sm mt-1 font-source-sans">
+                            <p className="text-danger text-sm mt-1 font-source-sans">
                                 {validationErrors.bio}
                             </p>
                         )}
