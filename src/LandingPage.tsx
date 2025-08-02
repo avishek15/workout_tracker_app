@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { SignInForm } from "./components/SignInForm";
 import { SignOutButton } from "./components/SignOutButton";
+import { Zap, BarChart3, Dumbbell, TrendingUp } from "lucide-react";
 
 export function LandingPage() {
     const [showAuth, setShowAuth] = useState(false);
@@ -29,9 +30,7 @@ export function LandingPage() {
                     {/* Logo */}
                     <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-accent-primary rounded-lg flex items-center justify-center">
-                            <span className="text-2xl font-bold text-white">
-                                ⚡
-                            </span>
+                            <Zap className="w-6 h-6 text-white" />
                         </div>
                         <span className="text-2xl font-bold text-text-primary font-montserrat">
                             FitFlow Pro
@@ -163,7 +162,7 @@ export function LandingPage() {
                     <div className="grid md:grid-cols-3 gap-8">
                         <div className="text-center p-8 rounded-lg bg-background-primary border border-accent-primary/20">
                             <div className="w-16 h-16 bg-accent-primary rounded-full flex items-center justify-center mx-auto mb-6">
-                                <span className="text-2xl">📊</span>
+                                <BarChart3 className="w-8 h-8 text-white" />
                             </div>
                             <h3 className="text-xl font-semibold text-text-primary mb-4 font-montserrat">
                                 Smart Analytics
@@ -176,7 +175,7 @@ export function LandingPage() {
                         </div>
                         <div className="text-center p-8 rounded-lg bg-background-primary border border-accent-secondary/20">
                             <div className="w-16 h-16 bg-accent-secondary rounded-full flex items-center justify-center mx-auto mb-6">
-                                <span className="text-2xl">🏋️‍♂️</span>
+                                <Dumbbell className="w-8 h-8 text-white" />
                             </div>
                             <h3 className="text-xl font-semibold text-text-primary mb-4 font-montserrat">
                                 Workout Tracking
@@ -189,7 +188,7 @@ export function LandingPage() {
                         </div>
                         <div className="text-center p-8 rounded-lg bg-background-primary border border-accent-primary/20">
                             <div className="w-16 h-16 bg-accent-primary rounded-full flex items-center justify-center mx-auto mb-6">
-                                <span className="text-2xl">📈</span>
+                                <TrendingUp className="w-8 h-8 text-white" />
                             </div>
                             <h3 className="text-xl font-semibold text-text-primary mb-4 font-montserrat">
                                 Progress History

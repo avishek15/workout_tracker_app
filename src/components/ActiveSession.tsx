@@ -87,7 +87,7 @@ export function ActiveSession() {
                 sessionId: activeSession._id as any,
                 notes: notes.trim() || undefined,
             });
-            toast.success("Workout completed! Great job! 💪");
+            toast.success("Workout completed! Great job!");
             setShowCompleteDialog(false);
         } catch (error) {
             toast.error("Failed to complete session");
