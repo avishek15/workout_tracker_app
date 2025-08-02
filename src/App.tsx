@@ -9,7 +9,13 @@ import { Profile } from "./components/Profile";
 import { LandingPage } from "./LandingPage";
 import { useState } from "react";
 import { Toaster } from "sonner";
-import { ChevronDown } from "lucide-react";
+import {
+    ChevronDown,
+    ClipboardList,
+    Clock,
+    BarChart3,
+    User,
+} from "lucide-react";
 
 function App() {
     const { isAuthenticated, isLoading } = useConvexAuth();
@@ -78,19 +84,7 @@ function App() {
                             <div className="flex items-center space-x-2">
                                 {activeTab === "workouts" && (
                                     <>
-                                        <svg
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                                            />
-                                        </svg>
+                                        <ClipboardList className="w-4 h-4" />
                                         <span className="text-accent-primary">
                                             Workouts
                                         </span>
@@ -98,19 +92,7 @@ function App() {
                                 )}
                                 {activeTab === "history" && (
                                     <>
-                                        <svg
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                            />
-                                        </svg>
+                                        <Clock className="w-4 h-4" />
                                         <span className="text-accent-primary">
                                             History
                                         </span>
@@ -118,19 +100,7 @@ function App() {
                                 )}
                                 {activeTab === "progress" && (
                                     <>
-                                        <svg
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                                            />
-                                        </svg>
+                                        <BarChart3 className="w-4 h-4" />
                                         <span className="text-accent-primary">
                                             Progress
                                         </span>
@@ -138,19 +108,7 @@ function App() {
                                 )}
                                 {activeTab === "profile" && (
                                     <>
-                                        <svg
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                            />
-                                        </svg>
+                                        <User className="w-4 h-4" />
                                         <span className="text-accent-primary">
                                             Profile
                                         </span>
@@ -176,19 +134,7 @@ function App() {
                                                 : "text-text-primary hover:bg-background-primary"
                                         }`}
                                     >
-                                        <svg
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                                            />
-                                        </svg>
+                                        <ClipboardList className="w-4 h-4" />
                                         <span>Workouts</span>
                                     </button>
                                     <button
@@ -202,19 +148,7 @@ function App() {
                                                 : "text-text-primary hover:bg-background-primary"
                                         }`}
                                     >
-                                        <svg
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                            />
-                                        </svg>
+                                        <Clock className="w-4 h-4" />
                                         <span>History</span>
                                     </button>
                                     <button
@@ -228,19 +162,7 @@ function App() {
                                                 : "text-text-primary hover:bg-background-primary"
                                         }`}
                                     >
-                                        <svg
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                                            />
-                                        </svg>
+                                        <BarChart3 className="w-4 h-4" />
                                         <span>Progress</span>
                                     </button>
                                     <button
@@ -254,19 +176,7 @@ function App() {
                                                 : "text-text-primary hover:bg-background-primary"
                                         }`}
                                     >
-                                        <svg
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                            />
-                                        </svg>
+                                        <User className="w-4 h-4" />
                                         <span>Profile</span>
                                     </button>
                                 </div>
@@ -298,19 +208,7 @@ function App() {
                                 }`}
                             >
                                 <div className="flex items-center space-x-1 sm:space-x-2">
-                                    <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                                        />
-                                    </svg>
+                                    <ClipboardList className="w-4 h-4" />
                                     <span>Workouts</span>
                                 </div>
                             </button>
@@ -323,19 +221,7 @@ function App() {
                                 }`}
                             >
                                 <div className="flex items-center space-x-1 sm:space-x-2">
-                                    <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                        />
-                                    </svg>
+                                    <Clock className="w-4 h-4" />
                                     <span>History</span>
                                 </div>
                             </button>
@@ -348,19 +234,7 @@ function App() {
                                 }`}
                             >
                                 <div className="flex items-center space-x-1 sm:space-x-2">
-                                    <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                                        />
-                                    </svg>
+                                    <BarChart3 className="w-4 h-4" />
                                     <span>Progress</span>
                                 </div>
                             </button>
@@ -373,19 +247,7 @@ function App() {
                                 }`}
                             >
                                 <div className="flex items-center space-x-1 sm:space-x-2">
-                                    <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                        />
-                                    </svg>
+                                    <User className="w-4 h-4" />
                                     <span>Profile</span>
                                 </div>
                             </button>

@@ -34,6 +34,9 @@ export function UserProfileHeader({
         <div className="relative">
             <button
                 onClick={() => setShowDropdown(!showDropdown)}
+                aria-haspopup="true"
+                aria-expanded={showDropdown}
+                aria-label="User menu"
                 className="flex items-center space-x-3 p-2 rounded-lg hover:bg-background-primary transition-colors"
             >
                 <div className="w-12 h-12 rounded-full bg-background-primary border-2 border-accent-primary/20 flex items-center justify-center overflow-hidden">
@@ -53,7 +56,11 @@ export function UserProfileHeader({
             </button>
 
             {showDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-accent-primary/20 py-2 z-50">
+                <div
+                    role="menu"
+                    aria-label="User menu options"
+                    className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-accent-primary/20 py-2 z-50"
+                >
                     <div className="px-4 py-2 border-b border-accent-primary/10">
                         <p className="text-sm font-medium text-text-primary font-source-sans">
                             {profile.name || "User"}
@@ -68,6 +75,7 @@ export function UserProfileHeader({
                                 setShowDropdown(false);
                                 onNavigateToProfile?.();
                             }}
+                            role="menuitem"
                             className="w-full px-4 py-2 text-left text-sm text-text-primary hover:bg-background-primary transition-colors font-source-sans flex items-center space-x-2"
                         >
                             <Settings className="w-4 h-4" />
@@ -77,6 +85,7 @@ export function UserProfileHeader({
                         <div className="px-2">
                             <button
                                 onClick={() => void signOut()}
+                                role="menuitem"
                                 className="w-full px-4 py-2 rounded bg-background-secondary text-text-primary border border-accent-primary/30 font-semibold hover:bg-accent-primary hover:text-white transition-colors shadow-sm hover:shadow font-source-sans"
                             >
                                 Sign out
