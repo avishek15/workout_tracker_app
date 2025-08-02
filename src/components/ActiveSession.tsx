@@ -129,40 +129,45 @@ export function ActiveSession() {
     return (
         <div className="space-y-6">
             {/* Session Header */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                <div className="flex justify-between items-start mb-4">
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-900">
-                            {activeSession.workout?.name}
-                        </h2>
-                        <p className="text-gray-600">
-                            Started {formatDuration(activeSession.startTime)}{" "}
-                            ago
-                        </p>
-                    </div>
-                    <div className="text-right">
-                        <div className="text-2xl font-bold text-green-600">
-                            {completedSets}/{totalSets}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-6 relative overflow-hidden">
+                {/* Animated background overlay */}
+                <div className="absolute inset-0 bg-green-100 opacity-0 animate-pulse-slow pointer-events-none"></div>
+                {/* Content */}
+                <div className="relative z-10">
+                    <div className="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 className="text-2xl font-bold text-gray-900">
+                                {activeSession.workout?.name}
+                            </h2>
+                            <p className="text-gray-600">
+                                Started{" "}
+                                {formatDuration(activeSession.startTime)} ago
+                            </p>
                         </div>
-                        <div className="text-sm text-gray-600">
-                            sets completed
+                        <div className="text-right">
+                            <div className="text-2xl font-bold text-green-600">
+                                {completedSets}/{totalSets}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                                sets completed
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="flex gap-3">
-                    <button
-                        onClick={() => setShowCompleteDialog(true)}
-                        className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
-                    >
-                        Complete Workout
-                    </button>
-                    <button
-                        onClick={() => void handleCancelSession()}
-                        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium"
-                    >
-                        Cancel
-                    </button>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setShowCompleteDialog(true)}
+                            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
+                        >
+                            Complete Workout
+                        </button>
+                        <button
+                            onClick={() => void handleCancelSession()}
+                            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium"
+                        >
+                            Cancel
+                        </button>
+                    </div>
                 </div>
             </div>
 
