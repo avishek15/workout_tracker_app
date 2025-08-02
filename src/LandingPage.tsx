@@ -28,9 +28,13 @@ export function LandingPage() {
             <nav className="relative z-10 px-6 lg:px-8 py-4">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
                     {/* Logo */}
-                    <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-accent-primary rounded-lg flex items-center justify-center">
-                            <Zap className="w-6 h-6 text-white" />
+                    <div className="flex items-center space-x-4">
+                        <div className="p-2">
+                            <img
+                                src="/logo2.png"
+                                alt="FitFlow Pro Logo"
+                                className="w-20 h-20 object-contain"
+                            />
                         </div>
                         <span className="text-2xl font-bold text-text-primary font-montserrat">
                             FitFlow Pro

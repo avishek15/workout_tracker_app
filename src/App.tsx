@@ -44,21 +44,13 @@ function App() {
             <header className="bg-background-secondary shadow-sm border-b border-accent-primary/20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
-                        <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-accent-primary rounded-lg flex items-center justify-center">
-                                <svg
-                                    className="w-5 h-5 text-white"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                                    />
-                                </svg>
+                        <div className="flex items-center space-x-4">
+                            <div className="p-2">
+                                <img
+                                    src="/logo2.png"
+                                    alt="FitFlow Pro Logo"
+                                    className="w-16 h-16 object-contain"
+                                />
                             </div>
                             <h1 className="text-xl font-bold text-text-primary font-montserrat">
                                 FitFlow Pro

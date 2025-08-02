@@ -27,12 +27,41 @@ const resizeAndConvertImage = async (file: File): Promise<Blob> => {
         const img = new Image();
 
         img.onload = () => {
-            // Resize to 300x300
-            canvas.width = 300;
-            canvas.height = 300;
+            const maxSize = 300;
+            const originalWidth = img.width;
+            const originalHeight = img.height;
 
-            // Draw and resize image
-            ctx?.drawImage(img, 0, 0, 300, 300);
+            // Calculate aspect ratio
+            const aspectRatio = originalWidth / originalHeight;
+
+            let newWidth, newHeight;
+
+            if (aspectRatio > 1) {
+                // Landscape image
+                newWidth = maxSize;
+                newHeight = maxSize / aspectRatio;
+            } else {
+                // Portrait or square image
+                newHeight = maxSize;
+                newWidth = maxSize * aspectRatio;
+            }
+
+            // Set canvas size to maxSize x maxSize
+            canvas.width = maxSize;
+            canvas.height = maxSize;
+
+            // Calculate centering offsets
+            const offsetX = (maxSize - newWidth) / 2;
+            const offsetY = (maxSize - newHeight) / 2;
+
+            // Fill canvas with white background (optional, for transparent images)
+            if (ctx) {
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, maxSize, maxSize);
+            }
+
+            // Draw the resized image centered on the canvas
+            ctx?.drawImage(img, offsetX, offsetY, newWidth, newHeight);
 
             // Convert to WebP
             canvas.toBlob(
@@ -62,7 +91,7 @@ export function Profile() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [bio, setBio] = useState("");
-    const [profileImage, setProfileImage] = useState<string | null>(null);
+
     const [isEditing, setIsEditing] = useState(false);
     const [imageUploading, setImageUploading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -87,7 +116,6 @@ export function Profile() {
             setName(profile.name || "");
             setEmail(profile.email || "");
             setBio(profile.bio || "");
-            setProfileImage(profile.image || null);
             setOriginalProfile(profile);
         }
     }, [profile]);
@@ -134,8 +162,6 @@ export function Profile() {
                 oldStorageId: oldStorageId || undefined,
             });
 
-            // Step 5: Update local state with the storage ID
-            setProfileImage(storageId);
             // Update the original profile to reflect the new image
             if (originalProfile) {
                 setOriginalProfile({
@@ -144,6 +170,7 @@ export function Profile() {
                     imageStorageId: storageId,
                 });
             }
+            // The getFileUrl query will automatically update with the new storageId
             toast.success("Profile image updated successfully!");
         } catch (error) {
             console.error("Image upload error:", error);
@@ -276,12 +303,6 @@ export function Profile() {
                                     alt="Profile"
                                     className="w-full h-full object-cover"
                                 />
-                            ) : profileImage ? (
-                                <img
-                                    src={profileImage}
-                                    alt="Profile"
-                                    className="w-full h-full object-cover"
-                                />
                             ) : (
                                 <User className="w-16 h-16 text-accent-primary/60" />
                             )}
@@ -397,9 +418,6 @@ export function Profile() {
                                         setName(originalProfile.name || "");
                                         setEmail(originalProfile.email || "");
                                         setBio(originalProfile.bio || "");
-                                        setProfileImage(
-                                            originalProfile.image || null
-                                        );
                                     }
                                 }}
                                 className="flex-1 px-4 py-3 border border-accent-primary/30 text-text-primary rounded-lg hover:bg-background-primary transition-colors font-medium font-source-sans"

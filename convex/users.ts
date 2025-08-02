@@ -1,8 +1,11 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import type { Id } from "./_generated/dataModel";
 
 export const generateUploadUrl = mutation({
+    args: v.object({}),
+    returns: v.string(),
     handler: async (ctx) => {
         const userId = await getAuthUserId(ctx);
         if (!userId) {
@@ -17,6 +20,7 @@ export const updateProfileImage = mutation({
         storageId: v.id("_storage"),
         oldStorageId: v.optional(v.id("_storage")), // for cleanup
     },
+    returns: v.null(),
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
         if (!userId) {
@@ -124,11 +128,21 @@ export const getProfile = query({
             .withIndex("by_user", (q) => q.eq("userId", userId))
             .unique();
 
+        // Handle mixed data types: user.image can be URL string OR storage ID
+        let imageStorageId: Id<"_storage"> | undefined;
+        if (user.image && typeof user.image === "string") {
+            // Check if it looks like a storage ID (starts with specific pattern)
+            // This is a simple heuristic - in production you might want more robust validation
+            if (user.image.startsWith("storage_")) {
+                imageStorageId = user.image as Id<"_storage">;
+            }
+        }
+
         return {
             name: user.name,
             email: user.email,
             image: user.image,
-            imageStorageId: user.image as any, // Cast to storage ID type
+            imageStorageId,
             bio: userProfile?.bio,
             isAnonymous: user.isAnonymous || false,
         };
@@ -137,6 +151,7 @@ export const getProfile = query({
 
 export const getFileUrl = query({
     args: { storageId: v.id("_storage") },
+    returns: v.union(v.string(), v.null()),
     handler: async (ctx, args) => {
         return await ctx.storage.getUrl(args.storageId);
     },
