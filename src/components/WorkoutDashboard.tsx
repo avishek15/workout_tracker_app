@@ -4,10 +4,8 @@ import { api } from "../../convex/_generated/api";
 import { WorkoutList } from "./WorkoutList";
 import { CreateWorkout } from "./CreateWorkout";
 import { ActiveSession } from "./ActiveSession";
-import { SessionHistory } from "./SessionHistory";
-import { ProgressDashboard } from "./ProgressDashboard";
 
-type Tab = "workouts" | "active" | "history" | "progress";
+type Tab = "workouts" | "active";
 
 export function WorkoutDashboard() {
     const [activeTab, setActiveTab] = useState<Tab>("workouts");
@@ -29,8 +27,6 @@ export function WorkoutDashboard() {
             icon: "🏃‍♂️",
             badge: activeSession ? "●" : null,
         },
-        { id: "history" as const, label: "History", icon: "📊" },
-        { id: "progress" as const, label: "Progress", icon: "📈" },
     ];
 
     return (
@@ -79,18 +75,6 @@ export function WorkoutDashboard() {
                 {activeTab === "active" && (
                     <div className="p-6">
                         <ActiveSession />
-                    </div>
-                )}
-
-                {activeTab === "history" && (
-                    <div className="p-6">
-                        <SessionHistory />
-                    </div>
-                )}
-
-                {activeTab === "progress" && (
-                    <div className="p-6">
-                        <ProgressDashboard />
                     </div>
                 )}
             </div>

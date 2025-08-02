@@ -17,13 +17,21 @@ export const list = query({
             .order("desc")
             .collect();
 
-        // Get workout details for each session
+        // Get workout details and sets for each session
         const sessionsWithWorkouts = await Promise.all(
             sessions.map(async (session) => {
                 const workout = await ctx.db.get(session.workoutId);
+                const sets = await ctx.db
+                    .query("sets")
+                    .withIndex("by_session", (q) =>
+                        q.eq("sessionId", session._id)
+                    )
+                    .collect();
+
                 return {
                     ...session,
                     workout,
+                    sets,
                 };
             })
         );

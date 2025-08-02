@@ -110,7 +110,7 @@ export function SessionHistory() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="p-8 space-y-8">
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-900">
                     Workout History
@@ -121,13 +121,13 @@ export function SessionHistory() {
                 </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
                 {allSessions.map((session) => {
                     const stats = getSessionStats(session);
                     return (
                         <div
                             key={session._id}
-                            className="border rounded-lg p-6 hover:shadow-md transition-shadow bg-white"
+                            className="border rounded-lg p-8 hover:shadow-lg transition-shadow bg-white"
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex-1">
@@ -183,7 +183,7 @@ export function SessionHistory() {
                                 </div>
                             )}
 
-                            <div className="flex gap-2">
+                            <div className="flex gap-3 mt-6">
                                 <button
                                     onClick={() => handleViewDetails(session)}
                                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
@@ -254,7 +254,7 @@ function SessionDetailsModal({ session, onClose }: SessionDetailsModalProps) {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-lg p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-start mb-6">
                     <div>
                         <h3 className="text-2xl font-bold text-gray-900">
@@ -286,12 +286,12 @@ function SessionDetailsModal({ session, onClose }: SessionDetailsModalProps) {
                     </div>
                 )}
 
-                <div className="space-y-6">
+                <div className="space-y-8">
                     {Object.entries(exerciseGroups).map(
                         ([exerciseName, sets]: [string, any]) => (
                             <div
                                 key={exerciseName}
-                                className="border rounded-lg p-4"
+                                className="border rounded-lg p-6"
                             >
                                 <h4 className="text-lg font-semibold text-gray-900 mb-3">
                                     {exerciseName}

@@ -1,14 +1,26 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-    --color-light: #ffffff;
-    --color-dark: #171717;
-    --color-primary: #3b82f6;
-    --color-primary-hover: #2563eb;
-    --color-secondary: #6b7280;
-    --color-secondary-hover: #4b5563;
+    /* Dark & Moody Color Palette */
+    --color-background-primary: #0a0a0a;
+    --color-background-secondary: #1a1a1a;
+    --color-accent-primary: #a855f7;
+    --color-accent-secondary: #d4af37;
+    --color-text-primary: #f5f5f5;
+    --color-text-secondary: #e0e0e0;
+    --color-text-muted: #a0a0a0;
+
+    /* Legacy support for existing components */
+    --color-light: #1a1a1a;
+    --color-dark: #f5f5f5;
+    --color-primary: #a855f7;
+    --color-primary-hover: #9333ea;
+    --color-secondary: #d4af37;
+    --color-secondary-hover: #b8941f;
 }
 
 .accent-text {
@@ -17,33 +29,61 @@
 
 body {
     font-family:
-        "Inter Variable",
-        ui-sans-serif,
-        system-ui,
+        "Source Sans Pro",
         -apple-system,
         BlinkMacSystemFont,
         "Segoe UI",
         Roboto,
-        "Helvetica Neue",
-        Arial,
-        "Noto Sans",
-        sans-serif,
-        "Apple Color Emoji",
-        "Segoe UI Emoji",
-        "Segoe UI Symbol",
-        "Noto Color Emoji";
-    color: var(--color-dark);
-    background: var(--color-light);
+        sans-serif;
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family:
+        "Montserrat",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        sans-serif;
+    font-weight: 700;
+}
+
+.font-montserrat {
+    font-family:
+        "Montserrat",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        sans-serif;
+}
+
+.font-source-sans {
+    font-family:
+        "Source Sans Pro",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        sans-serif;
 }
 
 /* only use this to update the style of the auth input fields. use a different class for all other input fields */
 .auth-input-field {
-    @apply w-full px-4 py-3 rounded-container bg-white border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow shadow-sm hover:shadow;
+    @apply w-full px-4 py-3 rounded-container bg-background-primary border border-accent-primary/30 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary outline-none transition-shadow shadow-sm hover:shadow text-text-primary placeholder-text-muted;
 }
 
 /* only use this to update the style of the auth buttons. use the button class for all other buttons */
 .auth-button {
-    @apply w-full px-4 py-3 rounded bg-primary text-white font-semibold hover:bg-primary-hover transition-colors shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply w-full px-4 py-3 rounded bg-accent-primary text-white font-semibold hover:bg-accent-primary/90 transition-colors shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
 /* gap for auth form fields */

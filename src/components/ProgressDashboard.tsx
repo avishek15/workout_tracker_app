@@ -23,14 +23,18 @@ export function ProgressDashboard() {
     const [selectedExercise, setSelectedExercise] = useState<string>("");
 
     const exercises = useQuery(api.analytics.getExerciseList);
-      const weightProgress = useQuery(api.analytics.getWeightProgress, {
-    exerciseName: selectedExercise || (exercises && exercises.length > 0 ? exercises[0] : ""),
-    timeRange,
-  });
-  const volumeProgress = useQuery(api.analytics.getVolumeProgress, {
-    exerciseName: selectedExercise || (exercises && exercises.length > 0 ? exercises[0] : ""),
-    timeRange,
-  });
+    const weightProgress = useQuery(api.analytics.getWeightProgress, {
+        exerciseName:
+            selectedExercise ||
+            (exercises && exercises.length > 0 ? exercises[0] : ""),
+        timeRange,
+    });
+    const volumeProgress = useQuery(api.analytics.getVolumeProgress, {
+        exerciseName:
+            selectedExercise ||
+            (exercises && exercises.length > 0 ? exercises[0] : ""),
+        timeRange,
+    });
     const workoutFrequency = useQuery(api.analytics.getWorkoutFrequency, {
         timeRange,
     });
@@ -64,7 +68,7 @@ export function ProgressDashboard() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="p-8 space-y-8">
             {/* Header with Controls */}
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-900">
@@ -99,7 +103,7 @@ export function ProgressDashboard() {
             </div>
 
             {/* Key Metrics Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="bg-white p-4 rounded-lg border shadow-sm">
                     <h3 className="text-sm font-medium text-gray-500">
                         Total Workouts
@@ -147,55 +151,67 @@ export function ProgressDashboard() {
                 </div>
             </div>
 
-                         {/* Charts Grid */}
-             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                 {/* Weight Progress Chart */}
-                 {selectedExercise && (
-                   <div className="bg-white p-6 rounded-lg border shadow-sm">
-                       <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                           Weight Progress - {selectedExercise}
-                       </h3>
-                       <ResponsiveContainer width="100%" height={300}>
-                           <LineChart data={formatChartData(weightProgress || [])}>
-                               <CartesianGrid strokeDasharray="3 3" />
-                               <XAxis dataKey="date" />
-                               <YAxis />
-                               <Tooltip />
-                               <Line
-                                   type="monotone"
-                                   dataKey="weight"
-                                   stroke="#0088FE"
-                                   strokeWidth={2}
-                                   dot={{ fill: "#0088FE", strokeWidth: 2, r: 4 }}
-                               />
-                           </LineChart>
-                       </ResponsiveContainer>
-                   </div>
-                 )}
+            {/* Charts Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Weight Progress Chart */}
+                {selectedExercise && (
+                    <div className="bg-white p-6 rounded-lg border shadow-sm">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                            Weight Progress - {selectedExercise}
+                        </h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <LineChart
+                                data={formatChartData(weightProgress || [])}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="date" />
+                                <YAxis />
+                                <Tooltip />
+                                <Line
+                                    type="monotone"
+                                    dataKey="weight"
+                                    stroke="#0088FE"
+                                    strokeWidth={2}
+                                    dot={{
+                                        fill: "#0088FE",
+                                        strokeWidth: 2,
+                                        r: 4,
+                                    }}
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                )}
 
-                 {/* Volume Progress Chart */}
-                 {selectedExercise && (
-                   <div className="bg-white p-6 rounded-lg border shadow-sm">
-                       <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                           Volume Progress - {selectedExercise}
-                       </h3>
-                       <ResponsiveContainer width="100%" height={300}>
-                           <LineChart data={formatChartData(volumeProgress || [])}>
-                               <CartesianGrid strokeDasharray="3 3" />
-                               <XAxis dataKey="date" />
-                               <YAxis />
-                               <Tooltip />
-                               <Line
-                                   type="monotone"
-                                   dataKey="volume"
-                                   stroke="#00C49F"
-                                   strokeWidth={2}
-                                   dot={{ fill: "#00C49F", strokeWidth: 2, r: 4 }}
-                               />
-                           </LineChart>
-                       </ResponsiveContainer>
-                   </div>
-                 )}
+                {/* Volume Progress Chart */}
+                {selectedExercise && (
+                    <div className="bg-white p-6 rounded-lg border shadow-sm">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                            Volume Progress - {selectedExercise}
+                        </h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <LineChart
+                                data={formatChartData(volumeProgress || [])}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="date" />
+                                <YAxis />
+                                <Tooltip />
+                                <Line
+                                    type="monotone"
+                                    dataKey="volume"
+                                    stroke="#00C49F"
+                                    strokeWidth={2}
+                                    dot={{
+                                        fill: "#00C49F",
+                                        strokeWidth: 2,
+                                        r: 4,
+                                    }}
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                )}
 
                 {/* Workout Frequency Chart */}
                 <div className="bg-white p-6 rounded-lg border shadow-sm">
@@ -295,51 +311,51 @@ export function ProgressDashboard() {
             </div>
 
             {/* Data Summary */}
-            <div className="bg-white p-6 rounded-lg border shadow-sm">
+            <div className="bg-white p-8 rounded-lg border shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Data Summary
                 </h3>
-                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                     {selectedExercise && (
-                       <div>
-                           <h4 className="font-medium text-gray-700">
-                               Weight Progress - {selectedExercise}
-                           </h4>
-                           <p className="text-gray-600">
-                               {weightProgress && weightProgress.length > 0
-                                   ? `Latest: ${weightProgress[weightProgress.length - 1]?.weight} lbs`
-                                   : "No data available"}
-                           </p>
-                       </div>
-                     )}
-                     {selectedExercise && (
-                       <div>
-                           <h4 className="font-medium text-gray-700">
-                               Volume Progress - {selectedExercise}
-                           </h4>
-                           <p className="text-gray-600">
-                               {volumeProgress && volumeProgress.length > 0
-                                   ? `Latest: ${volumeProgress[volumeProgress.length - 1]?.volume.toLocaleString()} lbs`
-                                   : "No data available"}
-                           </p>
-                       </div>
-                     )}
-                     <div>
-                         <h4 className="font-medium text-gray-700">
-                             Workout Frequency
-                         </h4>
-                         <p className="text-gray-600">
-                             {workoutFrequency && workoutFrequency.length > 0
-                                 ? `Average: ${Math.round(
-                                       workoutFrequency.reduce(
-                                           (sum, item) => sum + item.count,
-                                           0
-                                       ) / workoutFrequency.length
-                                   )} per period`
-                                 : "No data available"}
-                         </p>
-                     </div>
-                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+                    {selectedExercise && (
+                        <div>
+                            <h4 className="font-medium text-gray-700">
+                                Weight Progress - {selectedExercise}
+                            </h4>
+                            <p className="text-gray-600">
+                                {weightProgress && weightProgress.length > 0
+                                    ? `Latest: ${weightProgress[weightProgress.length - 1]?.weight} lbs`
+                                    : "No data available"}
+                            </p>
+                        </div>
+                    )}
+                    {selectedExercise && (
+                        <div>
+                            <h4 className="font-medium text-gray-700">
+                                Volume Progress - {selectedExercise}
+                            </h4>
+                            <p className="text-gray-600">
+                                {volumeProgress && volumeProgress.length > 0
+                                    ? `Latest: ${volumeProgress[volumeProgress.length - 1]?.volume.toLocaleString()} lbs`
+                                    : "No data available"}
+                            </p>
+                        </div>
+                    )}
+                    <div>
+                        <h4 className="font-medium text-gray-700">
+                            Workout Frequency
+                        </h4>
+                        <p className="text-gray-600">
+                            {workoutFrequency && workoutFrequency.length > 0
+                                ? `Average: ${Math.round(
+                                      workoutFrequency.reduce(
+                                          (sum, item) => sum + item.count,
+                                          0
+                                      ) / workoutFrequency.length
+                                  )} per period`
+                                : "No data available"}
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     );

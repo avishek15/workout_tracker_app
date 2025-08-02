@@ -5,12 +5,25 @@ export default {
         extend: {
             colors: {
                 primary: {
-                    DEFAULT: "#3b82f6",
-                    hover: "#2563eb",
+                    DEFAULT: "#A855F7",
+                    hover: "#9333EA",
                 },
                 secondary: {
-                    DEFAULT: "#6b7280",
-                    hover: "#4b5563",
+                    DEFAULT: "#D4AF37",
+                    hover: "#B8941F",
+                },
+                background: {
+                    primary: "#0A0A0A",
+                    secondary: "#1A1A1A",
+                },
+                accent: {
+                    primary: "#A855F7",
+                    secondary: "#D4AF37",
+                },
+                text: {
+                    primary: "#F5F5F5",
+                    secondary: "#E0E0E0",
+                    muted: "#A0A0A0",
                 },
             },
             spacing: {
