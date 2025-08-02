@@ -131,11 +131,9 @@ export const getProfile = query({
         // Handle mixed data types: user.image can be URL string OR storage ID
         let imageStorageId: Id<"_storage"> | undefined;
         if (user.image && typeof user.image === "string") {
-            // Check if it looks like a storage ID (starts with specific pattern)
-            // This is a simple heuristic - in production you might want more robust validation
-            if (user.image.startsWith("storage_")) {
-                imageStorageId = user.image as Id<"_storage">;
-            }
+            // If user.image is a string, assume it's a storage ID
+            // Convex storage IDs are strings that can be used directly
+            imageStorageId = user.image as Id<"_storage">;
         }
 
         return {

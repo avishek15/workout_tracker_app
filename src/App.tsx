@@ -44,19 +44,19 @@ function App() {
             <header className="bg-background-secondary shadow-sm border-b border-accent-primary/20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
-                        <div className="flex items-center space-x-4">
-                            <div className="p-2">
+                        <div className="flex items-center space-x-1">
+                            <div className="">
                                 <img
                                     src="/logo2.png"
                                     alt="FitFlow Pro Logo"
-                                    className="w-16 h-16 object-contain"
+                                    className="w-16 h-16 p-2 object-contain"
                                 />
                             </div>
                             <h1 className="text-xl font-bold text-text-primary font-montserrat">
                                 FitFlow Pro
                             </h1>
                         </div>
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-1">
                             <UserProfileHeader
                                 onNavigateToProfile={() =>
                                     setActiveTab("profile")

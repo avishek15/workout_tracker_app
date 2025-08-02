@@ -36,7 +36,7 @@ export function UserProfileHeader({
                 onClick={() => setShowDropdown(!showDropdown)}
                 className="flex items-center space-x-3 p-2 rounded-lg hover:bg-background-primary transition-colors"
             >
-                <div className="w-8 h-8 rounded-full bg-background-primary border-2 border-accent-primary/20 flex items-center justify-center overflow-hidden">
+                <div className="w-12 h-12 rounded-full bg-background-primary border-2 border-accent-primary/20 flex items-center justify-center overflow-hidden">
                     {getFileUrl ? (
                         <img
                             src={getFileUrl}
@@ -44,7 +44,7 @@ export function UserProfileHeader({
                             className="w-full h-full object-cover"
                         />
                     ) : (
-                        <User className="w-4 h-4 text-accent-primary/60" />
+                        <User className="w-6 h-6 text-accent-primary/60" />
                     )}
                 </div>
                 <span className="hidden sm:block text-sm font-medium text-text-primary font-source-sans">

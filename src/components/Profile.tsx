@@ -108,6 +108,7 @@ export function Profile() {
         api.users.getFileUrl,
         profile?.imageStorageId ? { storageId: profile.imageStorageId } : "skip"
     );
+
     const { signOut } = useAuthActions();
 
     // Pre-fill form with user data when it loads
