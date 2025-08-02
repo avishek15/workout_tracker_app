@@ -4,6 +4,7 @@ import { SignOutButton } from "./components/SignOutButton";
 import { WorkoutDashboard } from "./components/WorkoutDashboard";
 import { ProgressDashboard } from "./components/ProgressDashboard";
 import { SessionHistory } from "./components/SessionHistory";
+import { Profile } from "./components/Profile";
 import { LandingPage } from "./LandingPage";
 import { useState } from "react";
 import { Toaster } from "sonner";
@@ -11,7 +12,7 @@ import { Toaster } from "sonner";
 function App() {
     const { isAuthenticated, isLoading } = useConvexAuth();
     const [activeTab, setActiveTab] = useState<
-        "workouts" | "progress" | "history"
+        "workouts" | "progress" | "history" | "profile"
     >("workouts");
 
     if (isLoading) {
@@ -61,10 +62,6 @@ function App() {
                             </h1>
                         </div>
                         <div className="flex items-center space-x-4">
-                            <div className="hidden sm:flex items-center space-x-2 text-sm text-text-secondary font-source-sans">
-                                <div className="w-2 h-2 bg-accent-secondary rounded-full"></div>
-                                <span>Ready to train</span>
-                            </div>
                             <SignOutButton />
                         </div>
                     </div>
@@ -150,6 +147,31 @@ function App() {
                                 <span>Progress</span>
                             </div>
                         </button>
+                        <button
+                            onClick={() => setActiveTab("profile")}
+                            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors font-source-sans ${
+                                activeTab === "profile"
+                                    ? "border-accent-primary text-accent-primary"
+                                    : "border-transparent text-text-secondary hover:text-text-primary hover:border-accent-primary/50"
+                            }`}
+                        >
+                            <div className="flex items-center space-x-2">
+                                <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                    />
+                                </svg>
+                                <span>Profile</span>
+                            </div>
+                        </button>
                     </nav>
                 </div>
             </div>
@@ -160,6 +182,7 @@ function App() {
                     {activeTab === "workouts" && <WorkoutDashboard />}
                     {activeTab === "history" && <SessionHistory />}
                     {activeTab === "progress" && <ProgressDashboard />}
+                    {activeTab === "profile" && <Profile />}
                 </div>
             </main>
             <Toaster position="top-right" />

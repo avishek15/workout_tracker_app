@@ -5,22 +5,22 @@
 @tailwind utilities;
 
 :root {
-    /* Dark & Moody Color Palette - Lighter Version */
-    --color-background-primary: #1a1a1a;
-    --color-background-secondary: #2d2d2d;
-    --color-accent-primary: #a855f7;
-    --color-accent-secondary: #d4af37;
-    --color-text-primary: #f8f9fa;
-    --color-text-secondary: #e9ecef;
-    --color-text-muted: #adb5bd;
+    /* Warm Earthy Color Palette */
+    --color-background-primary: #f5f1eb;
+    --color-background-secondary: #e8e0d5;
+    --color-accent-primary: #8b6f47;
+    --color-accent-secondary: #a67c52;
+    --color-text-primary: #5d4e37;
+    --color-text-secondary: #7a6b53;
+    --color-text-muted: #9a8b73;
 
     /* Legacy support for existing components */
-    --color-light: #2d2d2d;
-    --color-dark: #f8f9fa;
-    --color-primary: #a855f7;
-    --color-primary-hover: #9333ea;
-    --color-secondary: #d4af37;
-    --color-secondary-hover: #b8941f;
+    --color-light: #e8e0d5;
+    --color-dark: #5d4e37;
+    --color-primary: #8b6f47;
+    --color-primary-hover: #7a5f3e;
+    --color-secondary: #a67c52;
+    --color-secondary-hover: #8f6a44;
 }
 
 .accent-text {

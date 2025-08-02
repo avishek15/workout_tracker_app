@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
+import { History } from "lucide-react";
 
 export function SessionHistory() {
     const sessions = useQuery(api.sessions.list);
@@ -26,11 +27,13 @@ export function SessionHistory() {
     if (allSessions.length === 0) {
         return (
             <div className="text-center py-12">
-                <div className="text-6xl mb-4">📊</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <div className="w-16 h-16 bg-accent-primary rounded-full flex items-center justify-center mx-auto mb-6">
+                    <History className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-text-primary mb-2 font-montserrat">
                     No workout history yet
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-text-secondary font-source-sans">
                     Complete your first workout to see your progress here!
                 </p>
             </div>
