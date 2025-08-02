@@ -71,107 +71,109 @@ function App() {
             {/* Navigation Tabs */}
             <div className="bg-background-secondary border-b border-accent-primary/20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <nav className="flex space-x-8">
-                        <button
-                            onClick={() => setActiveTab("workouts")}
-                            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors font-source-sans ${
-                                activeTab === "workouts"
-                                    ? "border-accent-primary text-accent-primary"
-                                    : "border-transparent text-text-secondary hover:text-text-primary hover:border-accent-primary/50"
-                            }`}
-                        >
-                            <div className="flex items-center space-x-2">
-                                <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                                    />
-                                </svg>
-                                <span>Workouts</span>
-                            </div>
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("history")}
-                            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors font-source-sans ${
-                                activeTab === "history"
-                                    ? "border-accent-primary text-accent-primary"
-                                    : "border-transparent text-text-secondary hover:text-text-primary hover:border-accent-primary/50"
-                            }`}
-                        >
-                            <div className="flex items-center space-x-2">
-                                <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                </svg>
-                                <span>History</span>
-                            </div>
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("progress")}
-                            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors font-source-sans ${
-                                activeTab === "progress"
-                                    ? "border-accent-primary text-accent-primary"
-                                    : "border-transparent text-text-secondary hover:text-text-primary hover:border-accent-primary/50"
-                            }`}
-                        >
-                            <div className="flex items-center space-x-2">
-                                <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                                    />
-                                </svg>
-                                <span>Progress</span>
-                            </div>
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("profile")}
-                            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors font-source-sans ${
-                                activeTab === "profile"
-                                    ? "border-accent-primary text-accent-primary"
-                                    : "border-transparent text-text-secondary hover:text-text-primary hover:border-accent-primary/50"
-                            }`}
-                        >
-                            <div className="flex items-center space-x-2">
-                                <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                    />
-                                </svg>
-                                <span>Profile</span>
-                            </div>
-                        </button>
+                    <nav className="flex overflow-x-auto">
+                        <div className="flex space-x-6 sm:space-x-8 min-w-full">
+                            <button
+                                onClick={() => setActiveTab("workouts")}
+                                className={`py-4 px-2 sm:px-1 border-b-2 font-medium text-sm transition-colors font-source-sans whitespace-nowrap flex-shrink-0 ${
+                                    activeTab === "workouts"
+                                        ? "border-accent-primary text-accent-primary"
+                                        : "border-transparent text-text-secondary hover:text-text-primary hover:border-accent-primary/50"
+                                }`}
+                            >
+                                <div className="flex items-center space-x-1 sm:space-x-2">
+                                    <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                                        />
+                                    </svg>
+                                    <span>Workouts</span>
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("history")}
+                                className={`py-4 px-2 sm:px-1 border-b-2 font-medium text-sm transition-colors font-source-sans whitespace-nowrap flex-shrink-0 ${
+                                    activeTab === "history"
+                                        ? "border-accent-primary text-accent-primary"
+                                        : "border-transparent text-text-secondary hover:text-text-primary hover:border-accent-primary/50"
+                                }`}
+                            >
+                                <div className="flex items-center space-x-1 sm:space-x-2">
+                                    <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
+                                    </svg>
+                                    <span>History</span>
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("progress")}
+                                className={`py-4 px-2 sm:px-1 border-b-2 font-medium text-sm transition-colors font-source-sans whitespace-nowrap flex-shrink-0 ${
+                                    activeTab === "progress"
+                                        ? "border-accent-primary text-accent-primary"
+                                        : "border-transparent text-text-secondary hover:text-text-primary hover:border-accent-primary/50"
+                                }`}
+                            >
+                                <div className="flex items-center space-x-1 sm:space-x-2">
+                                    <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                                        />
+                                    </svg>
+                                    <span>Progress</span>
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("profile")}
+                                className={`py-4 px-2 sm:px-1 border-b-2 font-medium text-sm transition-colors font-source-sans whitespace-nowrap flex-shrink-0 ${
+                                    activeTab === "profile"
+                                        ? "border-accent-primary text-accent-primary"
+                                        : "border-transparent text-text-secondary hover:text-text-primary hover:border-accent-primary/50"
+                                }`}
+                            >
+                                <div className="flex items-center space-x-1 sm:space-x-2">
+                                    <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                        />
+                                    </svg>
+                                    <span>Profile</span>
+                                </div>
+                            </button>
+                        </div>
                     </nav>
                 </div>
             </div>
