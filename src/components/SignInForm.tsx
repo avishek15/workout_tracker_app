@@ -3,9 +3,15 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export function SignInForm() {
+interface SignInFormProps {
+  initialMode?: "login" | "signup";
+}
+
+export function SignInForm({ initialMode = "login" }: SignInFormProps) {
   const { signIn } = useAuthActions();
-  const [flow, setFlow] = useState<"signIn" | "signUp">("signIn");
+  const [flow, setFlow] = useState<"signIn" | "signUp">(
+    initialMode === "signup" ? "signUp" : "signIn"
+  );
   const [submitting, setSubmitting] = useState(false);
 
   return (

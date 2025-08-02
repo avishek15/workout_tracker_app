@@ -2,6 +2,39 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
+export const generateUploadUrl = mutation({
+    handler: async (ctx) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) {
+            throw new Error("Not authenticated");
+        }
+        return await ctx.storage.generateUploadUrl();
+    },
+});
+
+export const updateProfileImage = mutation({
+    args: {
+        storageId: v.id("_storage"),
+        oldStorageId: v.optional(v.id("_storage")), // for cleanup
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) {
+            throw new Error("Not authenticated");
+        }
+
+        // Delete old profile image if it exists
+        if (args.oldStorageId) {
+            await ctx.storage.delete(args.oldStorageId);
+        }
+
+        // Update user profile with new storage ID
+        await ctx.db.patch(userId, { image: args.storageId });
+
+        return null;
+    },
+});
+
 export const updateProfile = mutation({
     args: {
         name: v.optional(v.string()),
@@ -56,6 +89,7 @@ export const getProfile = query({
         name: v.optional(v.string()),
         email: v.optional(v.string()),
         image: v.optional(v.string()),
+        imageStorageId: v.optional(v.id("_storage")),
         bio: v.optional(v.string()),
         isAnonymous: v.boolean(),
     }),
@@ -66,6 +100,7 @@ export const getProfile = query({
                 name: undefined,
                 email: undefined,
                 image: undefined,
+                imageStorageId: undefined,
                 bio: undefined,
                 isAnonymous: true,
             };
@@ -77,6 +112,7 @@ export const getProfile = query({
                 name: undefined,
                 email: undefined,
                 image: undefined,
+                imageStorageId: undefined,
                 bio: undefined,
                 isAnonymous: true,
             };
@@ -92,8 +128,16 @@ export const getProfile = query({
             name: user.name,
             email: user.email,
             image: user.image,
+            imageStorageId: user.image as any, // Cast to storage ID type
             bio: userProfile?.bio,
             isAnonymous: user.isAnonymous || false,
         };
     },
-}); 
+});
+
+export const getFileUrl = query({
+    args: { storageId: v.id("_storage") },
+    handler: async (ctx, args) => {
+        return await ctx.storage.getUrl(args.storageId);
+    },
+});
