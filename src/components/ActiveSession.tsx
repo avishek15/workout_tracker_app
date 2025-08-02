@@ -103,21 +103,9 @@ export function ActiveSession() {
     };
 
     const formatDuration = (startTime: number) => {
-        const now = Date.now();
-        const duration = Math.max(0, now - startTime); // Ensure non-negative duration
-
-        // If duration is very small or negative, show "Just started"
-        if (duration < 1000) {
-            return "Just started";
-        }
-
+        const duration = Date.now() - startTime;
         const minutes = Math.floor(duration / 60000);
         const seconds = Math.floor((duration % 60000) / 1000);
-
-        if (minutes === 0) {
-            return `${seconds}s`;
-        }
-
         return `${minutes}:${seconds.toString().padStart(2, "0")}`;
     };
 
@@ -147,11 +135,6 @@ export function ActiveSession() {
                         <p className="text-gray-600">
                             Started {formatDuration(activeSession.startTime)}{" "}
                             ago
-                            {activeSession.startTime > Date.now() && (
-                                <span className="text-orange-600 ml-2">
-                                    (Time sync issue)
-                                </span>
-                            )}
                         </p>
                     </div>
                     <div className="text-right">
@@ -172,7 +155,7 @@ export function ActiveSession() {
                         Complete Workout
                     </button>
                     <button
-                        onClick={handleCancelSession}
+                        onClick={() => void handleCancelSession()}
                         className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium"
                     >
                         Cancel
@@ -189,7 +172,7 @@ export function ActiveSession() {
                                 {exercise.name}
                             </h3>
                             <button
-                                onClick={() => handleAddSet(exercise.name)}
+                                onClick={() => void handleAddSet(exercise.name)}
                                 className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
                             >
                                 + Add Set
@@ -202,9 +185,19 @@ export function ActiveSession() {
                                     key={set._id}
                                     set={set}
                                     setNumber={setIndex + 1}
-                                    onUpdate={handleUpdateSet}
-                                    onComplete={handleCompleteSet}
-                                    onRemove={handleRemoveSet}
+                                    onUpdate={(setId, reps, weight) =>
+                                        void handleUpdateSet(
+                                            setId,
+                                            reps,
+                                            weight
+                                        )
+                                    }
+                                    onComplete={(setId) =>
+                                        void handleCompleteSet(setId)
+                                    }
+                                    onRemove={(setId) =>
+                                        void handleRemoveSet(setId)
+                                    }
                                 />
                             ))}
                         </div>
@@ -240,7 +233,7 @@ export function ActiveSession() {
                                     Cancel
                                 </button>
                                 <button
-                                    onClick={handleCompleteSession}
+                                    onClick={() => void handleCompleteSession()}
                                     className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
                                 >
                                     Complete
@@ -295,7 +288,7 @@ function SetRow({
                     value={reps}
                     onChange={(e) => setReps(parseInt(e.target.value) || 0)}
                     onBlur={handleUpdate}
-                    className="w-16 px-2 py-1 border border-gray-300 rounded text-center"
+                    className="w-16 px-3 py-1 border border-gray-300 rounded text-center"
                     disabled={set.completed}
                 />
                 <span className="text-sm text-gray-600">reps</span>
@@ -309,7 +302,7 @@ function SetRow({
                     value={weight}
                     onChange={(e) => setWeight(e.target.value)}
                     onBlur={handleUpdate}
-                    className="w-20 px-2 py-1 border border-gray-300 rounded text-center"
+                    className="w-20 px-3 py-1 border border-gray-300 rounded text-center"
                     placeholder="0"
                     disabled={set.completed}
                 />
@@ -320,7 +313,7 @@ function SetRow({
 
             {!set.completed ? (
                 <button
-                    onClick={() => onComplete(set._id)}
+                    onClick={() => void onComplete(set._id)}
                     className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors"
                 >
                     ✓ Done
@@ -332,7 +325,7 @@ function SetRow({
             )}
 
             <button
-                onClick={() => onRemove(set._id)}
+                onClick={() => void onRemove(set._id)}
                 className="text-red-600 hover:text-red-800 font-bold"
             >
                 ×

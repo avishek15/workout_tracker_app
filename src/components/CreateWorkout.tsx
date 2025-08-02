@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
-import { useCurrentUser } from "../hooks/useCurrentUser";
 
 interface Exercise {
     name: string;
@@ -17,7 +16,6 @@ interface CreateWorkoutProps {
 }
 
 export function CreateWorkout({ onClose }: CreateWorkoutProps) {
-    const { email } = useCurrentUser();
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -65,16 +63,10 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
         }
 
         try {
-            if (!email) {
-                toast.error("You must be logged in to create a workout");
-                return;
-            }
-
             await createWorkout({
                 name: name.trim(),
                 description: description.trim() || undefined,
                 exercises,
-                email,
             });
             toast.success("Workout created successfully!");
             onClose();
@@ -97,7 +89,7 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                 </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
                 {/* Workout Details */}
                 <div className="space-y-4">
                     <div>

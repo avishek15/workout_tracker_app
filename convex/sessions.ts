@@ -168,3 +168,32 @@ export const cancel = mutation({
         });
     },
 });
+
+// Delete a workout session
+export const deleteSession = mutation({
+    args: { sessionId: v.id("sessions") },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) {
+            throw new Error("Not authenticated");
+        }
+
+        const session = await ctx.db.get(args.sessionId);
+        if (!session || session.userId !== userId) {
+            throw new Error("Session not found or not authorized");
+        }
+
+        // Delete all sets associated with this session
+        const sets = await ctx.db
+            .query("sets")
+            .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
+            .collect();
+
+        for (const set of sets) {
+            await ctx.db.delete(set._id);
+        }
+
+        // Delete the session
+        await ctx.db.delete(args.sessionId);
+    },
+});

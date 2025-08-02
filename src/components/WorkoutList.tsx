@@ -2,29 +2,21 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { useState } from "react";
-import { useCurrentUser } from "../hooks/useCurrentUser";
 
 interface WorkoutListProps {
     onCreateNew: () => void;
 }
 
 export function WorkoutList({ onCreateNew }: WorkoutListProps) {
-    const { email, isLoading } = useCurrentUser();
-    const workouts = useQuery(api.workouts.list, email ? { email } : "skip");
+    const workouts = useQuery(api.workouts.list);
     const startSession = useMutation(api.sessions.start);
     const deleteWorkout = useMutation(api.workouts.remove);
     const [expandedWorkout, setExpandedWorkout] = useState<string | null>(null);
 
     const handleStartWorkout = async (workoutId: string) => {
-        if (!email) {
-            toast.error("Not authenticated");
-            return;
-        }
-
         try {
             await startSession({
                 workoutId: workoutId as any,
-                email,
             });
             toast.success("Workout session started!");
         } catch (error) {
@@ -38,15 +30,10 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
 
     const handleDeleteWorkout = async (workoutId: string) => {
         if (!confirm("Are you sure you want to delete this workout?")) return;
-        if (!email) {
-            toast.error("Not authenticated");
-            return;
-        }
 
         try {
             await deleteWorkout({
                 id: workoutId as any,
-                email,
             });
             toast.success("Workout deleted");
         } catch (error) {
@@ -58,7 +45,7 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
         setExpandedWorkout(expandedWorkout === workoutId ? null : workoutId);
     };
 
-    if (isLoading || workouts === undefined) {
+    if (workouts === undefined) {
         return <div className="text-center py-8">Loading workouts...</div>;
     }
 
