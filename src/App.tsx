@@ -16,6 +16,7 @@ import {
     BarChart3,
     User,
 } from "lucide-react";
+import { OfflineChip } from "./components/OfflineChip";
 
 function App() {
     const { isAuthenticated, isLoading } = useConvexAuth();
@@ -62,7 +63,8 @@ function App() {
                                 FitFlow Pro
                             </h1>
                         </div>
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center space-x-2">
+                            <OfflineChip />
                             <UserProfileHeader
                                 onNavigateToProfile={() =>
                                     setActiveTab("profile")

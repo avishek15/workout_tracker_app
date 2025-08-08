@@ -1,8 +1,8 @@
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-// Update a set's reps and weight
+// Update reps/weight
 export const update = mutation({
     args: {
         setId: v.id("sets"),
@@ -11,73 +11,61 @@ export const update = mutation({
     },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
-        if (!userId) {
-            throw new Error("Not authenticated");
-        }
+        if (!userId) throw new Error("Not authenticated");
 
         const set = await ctx.db.get(args.setId);
-        if (!set) {
-            throw new Error("Set not found");
-        }
-
+        if (!set) throw new Error("Set not found");
         const session = await ctx.db.get(set.sessionId);
-        if (!session || session.userId !== userId) {
+        if (!session || session.userId !== userId)
             throw new Error("Not authorized");
-        }
 
         await ctx.db.patch(args.setId, {
             reps: args.reps,
             weight: args.weight,
+            updatedAt: Date.now(),
         });
     },
 });
 
-// Mark a set as completed
+// Complete set
 export const complete = mutation({
     args: { setId: v.id("sets") },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
-        if (!userId) {
-            throw new Error("Not authenticated");
-        }
+        if (!userId) throw new Error("Not authenticated");
 
         const set = await ctx.db.get(args.setId);
-        if (!set) {
-            throw new Error("Set not found");
-        }
-
+        if (!set) throw new Error("Set not found");
         const session = await ctx.db.get(set.sessionId);
-        if (!session || session.userId !== userId) {
+        if (!session || session.userId !== userId)
             throw new Error("Not authorized");
-        }
 
+        const now = Date.now();
         await ctx.db.patch(args.setId, {
             completed: true,
-            completedAt: Date.now(),
+            completedAt: now,
+            updatedAt: now,
         });
     },
 });
 
-// Add a new set to an exercise
+// Add set (supports clientId)
 export const add = mutation({
     args: {
         sessionId: v.id("sessions"),
         exerciseName: v.string(),
         reps: v.number(),
         weight: v.optional(v.number()),
+        clientId: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
-        if (!userId) {
-            throw new Error("Not authenticated");
-        }
+        if (!userId) throw new Error("Not authenticated");
 
         const session = await ctx.db.get(args.sessionId);
-        if (!session || session.userId !== userId) {
+        if (!session || session.userId !== userId)
             throw new Error("Session not found or not authorized");
-        }
 
-        // Find the highest set number for this exercise
         const existingSets = await ctx.db
             .query("sets")
             .withIndex("by_session_and_exercise", (q) =>
@@ -91,6 +79,7 @@ export const add = mutation({
             0,
             ...existingSets.map((s) => s.setNumber)
         );
+        const now = Date.now();
 
         await ctx.db.insert("sets", {
             sessionId: args.sessionId,
@@ -99,29 +88,42 @@ export const add = mutation({
             reps: args.reps,
             weight: args.weight,
             completed: false,
+            clientId: args.clientId,
+            updatedAt: now,
         });
     },
 });
 
-// Remove a set
+// Soft delete set
 export const remove = mutation({
     args: { setId: v.id("sets") },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
-        if (!userId) {
-            throw new Error("Not authenticated");
-        }
+        if (!userId) throw new Error("Not authenticated");
 
         const set = await ctx.db.get(args.setId);
-        if (!set) {
-            throw new Error("Set not found");
-        }
-
+        if (!set) throw new Error("Set not found");
         const session = await ctx.db.get(set.sessionId);
-        if (!session || session.userId !== userId) {
+        if (!session || session.userId !== userId)
             throw new Error("Not authorized");
-        }
 
-        await ctx.db.delete(args.setId);
+        await ctx.db.patch(args.setId, {
+            deletedAt: Date.now(),
+            updatedAt: Date.now(),
+        });
+    },
+});
+
+// List by session since updatedAt (for sync)
+export const listBySessionSince = query({
+    args: { sessionId: v.id("sessions"), since: v.number() },
+    handler: async (ctx, args) => {
+        const docs = await ctx.db
+            .query("sets")
+            .withIndex("by_session_and_updatedAt", (q) =>
+                q.eq("sessionId", args.sessionId)
+            )
+            .collect();
+        return docs.filter((d) => d.updatedAt > args.since);
     },
 });

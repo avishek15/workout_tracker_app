@@ -2,23 +2,39 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-// Get all workouts for the current user
+// List (exclude soft-deleted)
 export const list = query({
     args: {},
     handler: async (ctx) => {
         const userId = await getAuthUserId(ctx);
-        if (!userId) {
-            throw new Error("Not authenticated");
-        }
+        if (!userId) throw new Error("Not authenticated");
 
-        return await ctx.db
+        const docs = await ctx.db
             .query("workouts")
             .withIndex("by_user", (q) => q.eq("userId", userId))
             .collect();
+
+        return docs.filter((d) => d.deletedAt === undefined);
     },
 });
 
-// Create a new workout template
+// List since updatedAt (for sync)
+export const listSince = query({
+    args: { since: v.number() },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) throw new Error("Not authenticated");
+
+        const docs = await ctx.db
+            .query("workouts")
+            .withIndex("by_user_and_updatedAt", (q) => q.eq("userId", userId))
+            .collect();
+
+        return docs.filter((d) => d.updatedAt > args.since);
+    },
+});
+
+// Create
 export const create = mutation({
     args: {
         name: v.string(),
@@ -32,21 +48,25 @@ export const create = mutation({
                 restTime: v.optional(v.number()),
             })
         ),
+        clientId: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
-        if (!userId) {
-            throw new Error("Not authenticated");
-        }
+        if (!userId) throw new Error("Not authenticated");
+        const now = Date.now();
 
         return await ctx.db.insert("workouts", {
-            ...args,
+            name: args.name,
+            description: args.description,
+            exercises: args.exercises,
             userId,
+            clientId: args.clientId,
+            updatedAt: now,
         });
     },
 });
 
-// Update a workout template
+// Update
 export const update = mutation({
     args: {
         id: v.id("workouts"),
@@ -64,34 +84,35 @@ export const update = mutation({
     },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
-        if (!userId) {
-            throw new Error("Not authenticated");
-        }
+        if (!userId) throw new Error("Not authenticated");
 
-        const workout = await ctx.db.get(args.id);
-        if (!workout || workout.userId !== userId) {
+        const doc = await ctx.db.get(args.id);
+        if (!doc || doc.userId !== userId)
             throw new Error("Workout not found or not authorized");
-        }
 
-        const { id, ...updates } = args;
-        await ctx.db.patch(id, updates);
+        await ctx.db.patch(args.id, {
+            name: args.name,
+            description: args.description,
+            exercises: args.exercises,
+            updatedAt: Date.now(),
+        });
     },
 });
 
-// Delete a workout template
+// Soft delete
 export const remove = mutation({
     args: { id: v.id("workouts") },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
-        if (!userId) {
-            throw new Error("Not authenticated");
-        }
+        if (!userId) throw new Error("Not authenticated");
 
-        const workout = await ctx.db.get(args.id);
-        if (!workout || workout.userId !== userId) {
+        const doc = await ctx.db.get(args.id);
+        if (!doc || doc.userId !== userId)
             throw new Error("Workout not found or not authorized");
-        }
 
-        await ctx.db.delete(args.id);
+        await ctx.db.patch(args.id, {
+            deletedAt: Date.now(),
+            updatedAt: Date.now(),
+        });
     },
 });
