@@ -17,6 +17,7 @@ import {
     User,
 } from "lucide-react";
 import { OfflineChip } from "./components/OfflineChip";
+import { SyncProvider } from "./components/SyncProvider";
 
 function App() {
     const { isAuthenticated, isLoading } = useConvexAuth();
@@ -268,6 +269,7 @@ function App() {
                 </div>
             </main>
             <Toaster position="top-right" />
+            <SyncProvider />
         </div>
     );
 }
