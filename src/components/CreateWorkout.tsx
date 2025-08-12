@@ -4,9 +4,9 @@ import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import {
     getUserDisplayUnit,
-    convertToUserUnit,
-    convertFromUserUnit,
-    formatWeightForUser,
+    convertToKg,
+    convertFromKg,
+    formatKgForUser,
 } from "../lib/unitConversion";
 
 interface Exercise {
@@ -220,19 +220,14 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                                 step="0.5"
                                 value={
                                     currentExercise.targetWeight
-                                        ? convertToUserUnit(
-                                              currentExercise.targetWeight,
-                                              "kg"
-                                          )
+                                        ? convertFromKg(currentExercise.targetWeight)
                                         : ""
                                 }
                                 onChange={(e) =>
                                     setCurrentExercise({
                                         ...currentExercise,
                                         targetWeight: e.target.value
-                                            ? convertFromUserUnit(
-                                                  parseFloat(e.target.value)
-                                              )
+                                            ? convertToKg(parseFloat(e.target.value))
                                             : undefined,
                                     })
                                 }
@@ -293,7 +288,7 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                                             {exercise.targetReps &&
                                                 ` × ${exercise.targetReps} reps`}
                                             {exercise.targetWeight &&
-                                                ` @ ${formatWeightForUser(exercise.targetWeight, "kg")}`}
+                                                ` @ ${formatKgForUser(exercise.targetWeight)}`}
                                             {exercise.restTime &&
                                                 ` (${exercise.restTime}s rest)`}
                                         </span>
