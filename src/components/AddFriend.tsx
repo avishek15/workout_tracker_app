@@ -74,9 +74,9 @@ export function AddFriend({ onClose }: AddFriendProps) {
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() =>
-                                            handleSendRequest(user._id)
-                                        }
+                                        onClick={() => {
+                                            void handleSendRequest(user._id);
+                                        }}
                                         className="px-3 py-1 bg-accent-secondary text-white rounded text-sm hover:bg-accent-secondary/90 transition-colors"
                                     >
                                         Add Friend
