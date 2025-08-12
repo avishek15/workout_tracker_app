@@ -1,8 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
-import { X, Calendar, TrendingUp, Dumbbell, Clock } from "lucide-react";
+import {
+    X,
+    Calendar,
+    TrendingUp,
+    Dumbbell,
+    Clock,
+    BarChart3,
+    ChevronDown,
+    ChevronUp,
+} from "lucide-react";
+import { VolumeStats } from "./VolumeStats";
+import { ProgressComparison } from "./ProgressComparison";
 
 interface FriendProfileProps {
     friendUserId: Id<"users">;
@@ -11,6 +22,7 @@ interface FriendProfileProps {
 
 export function FriendProfile({ friendUserId, onClose }: FriendProfileProps) {
     const profile = useQuery(api.social.getFriendProfile, { friendUserId });
+    const [showComparison, setShowComparison] = useState(false);
 
     if (!profile) {
         return (
@@ -58,12 +70,22 @@ export function FriendProfile({ friendUserId, onClose }: FriendProfileProps) {
                             </p>
                         </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-background-primary rounded-lg transition-colors"
-                    >
-                        <X className="w-6 h-6 text-text-secondary" />
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setShowComparison(!showComparison)}
+                            className="px-4 py-2 bg-accent-secondary text-white rounded-lg hover:bg-accent-secondary/90 transition-colors"
+                        >
+                            {showComparison
+                                ? "Hide Comparison"
+                                : "Compare Progress"}
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="p-2 hover:bg-background-primary rounded-lg transition-colors"
+                        >
+                            <X className="w-6 h-6 text-text-secondary" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Stats Grid */}
@@ -165,6 +187,22 @@ export function FriendProfile({ friendUserId, onClose }: FriendProfileProps) {
                             </p>
                         )}
                     </div>
+                </div>
+
+                {/* Progress Comparison */}
+                {showComparison && (
+                    <div className="mt-6">
+                        <ProgressComparison friendUserId={friendUserId} />
+                    </div>
+                )}
+
+                {/* Volume Statistics */}
+                <div className="mt-6">
+                    <VolumeStats
+                        userId={friendUserId}
+                        timePeriod="month"
+                        showDetails={false}
+                    />
                 </div>
 
                 {/* Public Workouts */}

@@ -10,7 +10,12 @@ import {
     Activity,
     Calendar,
     Target,
+    Dumbbell,
+    BarChart3,
+    ChevronDown,
+    ChevronUp,
 } from "lucide-react";
+import { VolumeStats } from "./VolumeStats";
 
 export function SocialDashboard() {
     const friends = useQuery(api.social.getFriends);
@@ -309,6 +314,15 @@ export function SocialDashboard() {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* My Volume Stats */}
+            <div className="bg-background-primary rounded-lg p-6 border border-border">
+                <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-accent-primary" />
+                    My Volume Stats
+                </h3>
+                <VolumeStats timePeriod="month" showDetails={false} />
             </div>
         </div>
     );

@@ -1035,6 +1035,153 @@ export const getUserVolumeStats = query({
     },
 });
 
+// Get current user's volume stats
+export const getMyVolumeStats = query({
+    args: {
+        timePeriod: v.union(
+            v.literal("week"),
+            v.literal("month"),
+            v.literal("quarter"),
+            v.literal("year")
+        ),
+    },
+    returns: v.object({
+        totalVolume: v.number(),
+        totalWorkouts: v.number(),
+        averageVolumePerWorkout: v.number(),
+        volumeByExercise: v.array(
+            v.object({
+                exerciseName: v.string(),
+                totalVolume: v.number(),
+                totalSets: v.number(),
+                averageWeight: v.number(),
+            })
+        ),
+        volumeByWeek: v.array(
+            v.object({
+                weekStart: v.number(),
+                totalVolume: v.number(),
+                workoutCount: v.number(),
+            })
+        ),
+    }),
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) {
+            throw new Error("Not authenticated");
+        }
+
+        // Reuse the same logic as getUserVolumeStats
+        const now = Date.now();
+        let startTime: number;
+
+        switch (args.timePeriod) {
+            case "week":
+                startTime = now - 7 * 24 * 60 * 60 * 1000;
+                break;
+            case "month":
+                startTime = now - 30 * 24 * 60 * 60 * 1000;
+                break;
+            case "quarter":
+                startTime = now - 90 * 24 * 60 * 60 * 1000;
+                break;
+            case "year":
+                startTime = now - 365 * 24 * 60 * 60 * 1000;
+                break;
+        }
+
+        const sessions = await ctx.db
+            .query("sessions")
+            .withIndex("by_user_and_status", (q) =>
+                q.eq("userId", userId).eq("status", "completed")
+            )
+            .filter((q) =>
+                q.and(
+                    q.gte(q.field("endTime"), startTime),
+                    q.lte(q.field("endTime"), now)
+                )
+            )
+            .collect();
+
+        let totalVolume = 0;
+        const totalWorkouts = sessions.length;
+        const exerciseVolumes: Record<
+            string,
+            { volume: number; sets: number; totalWeight: number }
+        > = {};
+        const weeklyVolumes: Record<
+            string,
+            { volume: number; workouts: number }
+        > = {};
+
+        for (const session of sessions) {
+            const sets = await ctx.db
+                .query("sets")
+                .withIndex("by_session", (q) => q.eq("sessionId", session._id))
+                .collect();
+
+            let sessionVolume = 0;
+
+            for (const set of sets) {
+                if (set.completed && set.weight && set.reps) {
+                    const setVolume = set.weight * set.reps;
+                    sessionVolume += setVolume;
+
+                    if (!exerciseVolumes[set.exerciseName]) {
+                        exerciseVolumes[set.exerciseName] = {
+                            volume: 0,
+                            sets: 0,
+                            totalWeight: 0,
+                        };
+                    }
+                    exerciseVolumes[set.exerciseName].volume += setVolume;
+                    exerciseVolumes[set.exerciseName].sets += 1;
+                    exerciseVolumes[set.exerciseName].totalWeight += set.weight;
+                }
+            }
+
+            totalVolume += sessionVolume;
+
+            const weekStart = new Date(session.endTime || session.startTime);
+            weekStart.setHours(0, 0, 0, 0);
+            weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+            const weekKey = weekStart.getTime().toString();
+
+            if (!weeklyVolumes[weekKey]) {
+                weeklyVolumes[weekKey] = { volume: 0, workouts: 0 };
+            }
+            weeklyVolumes[weekKey].volume += sessionVolume;
+            weeklyVolumes[weekKey].workouts += 1;
+        }
+
+        const volumeByExercise = Object.entries(exerciseVolumes)
+            .map(([exerciseName, data]) => ({
+                exerciseName,
+                totalVolume: data.volume,
+                totalSets: data.sets,
+                averageWeight: data.sets > 0 ? data.totalWeight / data.sets : 0,
+            }))
+            .sort((a, b) => b.totalVolume - a.totalVolume);
+
+        const volumeByWeek = Object.entries(weeklyVolumes)
+            .map(([weekStart, data]) => ({
+                weekStart: parseInt(weekStart),
+                totalVolume: data.volume,
+                workoutCount: data.workouts,
+            }))
+            .sort((a, b) => a.weekStart - b.weekStart);
+
+        return {
+            totalVolume,
+            totalWorkouts,
+            averageVolumePerWorkout:
+                totalWorkouts > 0 ? totalVolume / totalWorkouts : 0,
+            volumeByExercise,
+            volumeByWeek,
+        };
+    },
+});
+
 // Get friend's volume stats for comparison
 export const getFriendVolumeStats = query({
     args: {
