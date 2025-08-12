@@ -18,15 +18,17 @@ import {
 } from "lucide-react";
 import { OfflineChip } from "./components/OfflineChip";
 import { SyncProvider } from "./components/SyncProvider";
+import { useReachability } from "./hooks/useReachability";
 
 function App() {
     const { isAuthenticated, isLoading } = useConvexAuth();
+    const { isOffline } = useReachability();
     const [activeTab, setActiveTab] = useState<
         "workouts" | "progress" | "history" | "profile"
     >("workouts");
     const [showMobileNav, setShowMobileNav] = useState(false);
 
-    if (isLoading) {
+    if (isLoading && !isOffline) {
         return (
             <div className="min-h-screen bg-background-primary flex items-center justify-center">
                 <div className="text-center">

@@ -3,6 +3,8 @@ import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Dumbbell } from "lucide-react";
+import { db } from "../lib/db";
+import { enqueue } from "../lib/sync";
 
 interface WorkoutListProps {
     onCreateNew: () => void;
@@ -16,16 +18,68 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
 
     const handleStartWorkout = async (workoutId: string) => {
         try {
-            await startSession({
-                workoutId: workoutId as any,
-            });
+            await startSession({ workoutId: workoutId as any });
             toast.success("Workout session started!");
         } catch (error) {
-            toast.error(
-                error instanceof Error
-                    ? error.message
-                    : "Failed to start workout"
-            );
+            // Fallback: offline/local-first start
+            const now = Date.now();
+            const clientId = crypto.randomUUID();
+
+            // Find workout details we already have in memory
+            const workout = workouts?.find((w) => w._id === workoutId);
+            if (!workout) {
+                toast.error("Workout not found locally");
+                return;
+            }
+
+            // Local session
+            await db.sessions.put({
+                clientId,
+                serverId: undefined,
+                userId: "", // not needed locally
+                workoutServerId: workout._id,
+                startTime: now,
+                status: "active",
+                notes: undefined,
+                updatedAt: now,
+                deletedAt: undefined,
+                dirty: true,
+            });
+
+            // Local sets
+            for (const ex of workout.exercises) {
+                for (
+                    let setNumber = 1;
+                    setNumber <= ex.targetSets;
+                    setNumber++
+                ) {
+                    await db.sets.put({
+                        clientId: crypto.randomUUID(),
+                        serverId: undefined,
+                        sessionClientId: clientId,
+                        sessionServerId: undefined,
+                        exerciseName: ex.name,
+                        setNumber,
+                        reps: ex.targetReps ?? 0,
+                        weight: ex.targetWeight,
+                        completed: false,
+                        completedAt: undefined,
+                        updatedAt: now,
+                        deletedAt: undefined,
+                        dirty: true,
+                    });
+                }
+            }
+
+            // Enqueue start to Convex for later
+            await enqueue({
+                table: "sessions",
+                op: "create",
+                clientId,
+                payload: { workoutId, clientId }, // sessions.start accepts clientId
+            });
+
+            toast.success("Workout started (offline). Will sync when online.");
         }
     };
 

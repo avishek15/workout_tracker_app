@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { subscribeReachability } from "../lib/sync";
 
-export function OfflineChip() {
+export function useReachability() {
     const [online, setOnline] = useState<boolean>(navigator.onLine);
     const [reachable, setReachable] = useState<boolean>(true);
 
@@ -18,12 +18,5 @@ export function OfflineChip() {
         };
     }, []);
 
-    const isOffline = !online || !reachable;
-    if (!isOffline) return null;
-
-    return (
-        <div className="hidden md:flex items-center text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 border border-yellow-300">
-            Offline mode
-        </div>
-    );
+    return { isOffline: !online || !reachable, online, reachable };
 }

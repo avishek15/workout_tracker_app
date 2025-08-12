@@ -4,6 +4,9 @@ import { api } from "../../convex/_generated/api";
 import { WorkoutList } from "./WorkoutList";
 import { CreateWorkout } from "./CreateWorkout";
 import { ActiveSession } from "./ActiveSession";
+import { useEffect } from "react";
+import { liveQuery } from "dexie";
+import { db } from "../lib/db";
 
 type Tab = "workouts" | "active";
 
@@ -17,6 +20,21 @@ export function WorkoutDashboard() {
         if (activeSession && activeTab !== "active") {
             setActiveTab("active");
         }
+    }, [activeSession, activeTab]);
+
+    // NEW: also react to a local active session
+    useEffect(() => {
+        if (activeSession) return; // server active takes precedence
+        const sub = liveQuery(async () => {
+            const sessions = await db.sessions.toArray();
+            return sessions.find((s) => s.status === "active" && !s.deletedAt);
+        }).subscribe({
+            next: (localActive) => {
+                if (localActive && activeTab !== "active")
+                    setActiveTab("active");
+            },
+        });
+        return () => sub.unsubscribe();
     }, [activeSession, activeTab]);
 
     const tabs = [

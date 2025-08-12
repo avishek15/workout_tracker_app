@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { Play } from "lucide-react";
+import { db } from "../lib/db";
+import { enqueue } from "../lib/sync";
+import { liveQuery } from "dexie";
 
 export function ActiveSession() {
     const activeSession = useQuery(api.sessions.getActive);
@@ -12,6 +15,119 @@ export function ActiveSession() {
     const completeSet = useMutation(api.sets.complete);
     const addSet = useMutation(api.sets.add);
     const removeSet = useMutation(api.sets.remove);
+
+    // NEW: local Dexie-backed sets for this session
+    const [localSets, setLocalSets] = useState<any[] | null>(null);
+
+    // Seed Dexie with server snapshot when we have it (once per session or when it changes)
+    useEffect(() => {
+        if (!activeSession) return;
+        const seed = async () => {
+            for (const s of activeSession.sets) {
+                const existing = await db.sets
+                    .where("serverId")
+                    .equals(s._id)
+                    .first();
+                if (existing) {
+                    // keep latest values from server
+                    await db.sets.update(existing.clientId, {
+                        sessionServerId: activeSession._id,
+                        exerciseName: s.exerciseName,
+                        setNumber: s.setNumber,
+                        reps: s.reps,
+                        weight: s.weight,
+                        completed: s.completed,
+                        completedAt: s.completedAt,
+                        updatedAt: Date.now(),
+                        deletedAt: undefined,
+                        dirty: false,
+                        serverId: s._id,
+                    });
+                } else {
+                    await db.sets.put({
+                        clientId: crypto.randomUUID(),
+                        serverId: s._id,
+                        sessionServerId: activeSession._id,
+                        exerciseName: s.exerciseName,
+                        setNumber: s.setNumber,
+                        reps: s.reps,
+                        weight: s.weight,
+                        completed: s.completed,
+                        completedAt: s.completedAt,
+                        updatedAt: Date.now(),
+                        deletedAt: undefined,
+                        dirty: false,
+                    });
+                }
+            }
+
+            const existingSession = await db.sessions
+                .where("serverId")
+                .equals(activeSession._id)
+                .first();
+
+            const base = {
+                userId: activeSession.userId,
+                startTime: activeSession.startTime,
+                endTime: activeSession.endTime,
+                status: activeSession.status,
+                notes: activeSession.notes,
+                workoutServerId:
+                    activeSession.workoutId ?? activeSession.workout?._id,
+                updatedAt: Date.now(),
+                deletedAt: undefined,
+                dirty: false,
+                serverId: activeSession._id,
+            };
+
+            if (existingSession) {
+                await db.sessions.update(existingSession.clientId, base);
+            } else {
+                await db.sessions.put({
+                    clientId: crypto.randomUUID(),
+                    ...base,
+                });
+            }
+        };
+        void seed();
+    }, [activeSession?._id, activeSession?.sets]);
+
+    // Subscribe to this session's sets from Dexie
+    useEffect(() => {
+        if (!activeSession) return;
+        const subscription = liveQuery(() =>
+            db.sets.where("sessionServerId").equals(activeSession._id).toArray()
+        ).subscribe({
+            next: (rows) => setLocalSets(rows),
+        });
+        return () => subscription.unsubscribe();
+    }, [activeSession?._id]);
+
+    // Decide which sets to render: prefer Dexie overlay if available
+    const setsToRender = useMemo(() => {
+        if (localSets && localSets.length > 0) {
+            // map Dexie rows to the shape expected by UI
+            return localSets.map((s) => ({
+                _id: s.serverId || s.clientId, // stable key
+                exerciseName: s.exerciseName,
+                setNumber: s.setNumber,
+                reps: s.reps,
+                weight: s.weight,
+                completed: s.completed,
+                completedAt: s.completedAt,
+            }));
+        }
+        return activeSession?.sets ?? [];
+    }, [localSets, activeSession?.sets]);
+
+    // Group sets by exercise, using server workout definition + setsToRender overlay
+    const exerciseGroups =
+        activeSession?.workout?.exercises.map((exercise) => ({
+            ...exercise,
+            sets: setsToRender.filter(
+                (set) => set.exerciseName === exercise.name
+            ),
+        })) || [];
 
     const [notes, setNotes] = useState("");
     const [showCompleteDialog, setShowCompleteDialog] = useState(false);
@@ -36,27 +152,77 @@ export function ActiveSession() {
         );
     }
 
+    // Update reps/weight — optimistic local update + enqueue; network call optional
     const handleUpdateSet = async (
         setId: string,
         reps: number,
         weight?: number
     ) => {
         try {
-            await updateSet({ setId: setId as any, reps, weight });
-        } catch (error) {
+            let local = await db.sets.where("serverId").equals(setId).first();
+            if (!local) {
+                local = await db.sets.where("clientId").equals(setId).first(); // local-only
+            }
+            if (local) {
+                await db.sets.update(local.clientId, {
+                    reps,
+                    weight,
+                    updatedAt: Date.now(),
+                    dirty: true,
+                });
+                // only enqueue if we have a serverId
+                if (local.serverId) {
+                    await enqueue({
+                        table: "sets",
+                        op: "update",
+                        clientId: local.clientId,
+                        payload: { setId: local.serverId, reps, weight },
+                    });
+                }
+            } else {
+                // fallback
+                await updateSet({ setId: setId as any, reps, weight });
+            }
+        } catch {
             toast.error("Failed to update set");
         }
     };
 
+    // Complete set — optimistic local update + enqueue; network call optional
     const handleCompleteSet = async (setId: string) => {
         try {
-            await completeSet({ setId: setId as any });
-            toast.success("Set completed!");
-        } catch (error) {
+            let local = await db.sets.where("serverId").equals(setId).first();
+            if (!local) {
+                local = await db.sets.where("clientId").equals(setId).first();
+            }
+            if (local) {
+                const now = Date.now();
+                await db.sets.update(local.clientId, {
+                    completed: true,
+                    completedAt: now,
+                    updatedAt: now,
+                    dirty: true,
+                });
+                if (local.serverId) {
+                    await enqueue({
+                        table: "sets",
+                        op: "complete",
+                        clientId: local.clientId,
+                        payload: { setId: local.serverId },
+                    });
+                }
+                toast.success("Set completed!");
+            } else {
+                // fallback if no local record (rare)
+                await completeSet({ setId: setId as any });
+                toast.success("Set completed!");
+            }
+        } catch {
             toast.error("Failed to complete set");
         }
     };
 
+    // Existing add/remove handlers can remain; they still hit server directly
     const handleAddSet = async (exerciseName: string) => {
         try {
             await addSet({
@@ -83,13 +249,68 @@ export function ActiveSession() {
 
     const handleCompleteSession = async () => {
         try {
+            // ensure a local session record exists
+            let local = await db.sessions
+                .where("serverId")
+                .equals(activeSession._id)
+                .first();
+            if (!local) {
+                const clientId = crypto.randomUUID();
+                await db.sessions.put({
+                    clientId,
+                    serverId: activeSession._id,
+                    userId: activeSession.userId,
+                    startTime: activeSession.startTime,
+                    endTime: activeSession.endTime,
+                    status: activeSession.status,
+                    notes: activeSession.notes,
+                    workoutServerId:
+                        activeSession.workoutId ?? activeSession.workout?._id,
+                    updatedAt: Date.now(),
+                    dirty: false,
+                });
+                local = await db.sessions
+                    .where("serverId")
+                    .equals(activeSession._id)
+                    .first();
+            }
+
+            const now = Date.now();
+            // optimistic local update
+            await db.sessions.update(local!.clientId, {
+                status: "completed",
+                endTime: now,
+                notes: notes.trim() || undefined,
+                updatedAt: now,
+                dirty: !navigator.onLine,
+            });
+
+            if (!navigator.onLine) {
+                // enqueue completion for background sync
+                await enqueue({
+                    table: "sessions",
+                    op: "update", // handled in sync.ts to call sessions.complete
+                    clientId: local!.clientId,
+                    payload: {
+                        sessionId: activeSession._id,
+                        notes: notes.trim() || undefined,
+                    },
+                });
+                toast.success(
+                    "Workout will be completed when you're back online."
+                );
+                setShowCompleteDialog(false);
+                return;
+            }
+
+            // online fast-path
             await completeSession({
                 sessionId: activeSession._id as any,
                 notes: notes.trim() || undefined,
             });
             toast.success("Workout completed! Great job!");
             setShowCompleteDialog(false);
-        } catch (error) {
+        } catch {
             toast.error("Failed to complete session");
         }
     };
@@ -112,19 +333,9 @@ export function ActiveSession() {
         return `${minutes}:${seconds.toString().padStart(2, "0")}`;
     };
 
-    // Group sets by exercise
-    const exerciseGroups =
-        activeSession.workout?.exercises.map((exercise) => ({
-            ...exercise,
-            sets: activeSession.sets.filter(
-                (set) => set.exerciseName === exercise.name
-            ),
-        })) || [];
-
-    const completedSets = activeSession.sets.filter(
-        (set) => set.completed
-    ).length;
-    const totalSets = activeSession.sets.length;
+    // Use setsToRender for counts so offline changes reflect immediately
+    const completedSets = setsToRender.filter((s) => s.completed).length;
+    const totalSets = setsToRender.length;
 
     return (
         <div className="space-y-6 pb-20">

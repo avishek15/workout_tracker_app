@@ -8,8 +8,30 @@ import {
     type SyncQueueItem,
 } from "./db";
 
+let reachable = true;
+const reachabilityListeners = new Set<(r: boolean) => void>();
+
+function setReachable(r: boolean) {
+    if (reachable !== r) {
+        reachable = r;
+        reachabilityListeners.forEach((fn) => fn(r));
+    }
+}
+
+export function subscribeReachability(listener: (r: boolean) => void) {
+    reachabilityListeners.add(listener);
+    // emit current value immediately
+    listener(reachable);
+    return () => reachabilityListeners.delete(listener);
+}
+
+export function isBackendReachable() {
+    return reachable;
+}
+
 async function pushDirty() {
     const queue = await db.syncQueue.orderBy("ts").toArray();
+    let failed = false;
     for (const item of queue) {
         try {
             if (item.table === "workouts") {
@@ -34,10 +56,84 @@ async function pushDirty() {
                         api.sessions.start,
                         item.payload
                     );
+                    const serverSessionId = res as any;
+
+                    // mark session as synced
                     await db.sessions.update(item.clientId, {
-                        serverId: res as any,
+                        serverId: serverSessionId,
                         dirty: false,
                     });
+
+                    // Fetch server sets for this session
+                    const serverSets = await convex.query(
+                        api.sets.listBySessionSince,
+                        { sessionId: serverSessionId, since: 0 }
+                    );
+
+                    // Map local sets to server sets by (exerciseName, setNumber)
+                    const localSets = await db.sets
+                        .where("sessionClientId")
+                        .equals(item.clientId)
+                        .toArray();
+
+                    for (const s of serverSets as any[]) {
+                        const match = localSets.find(
+                            (ls) =>
+                                !ls.serverId &&
+                                ls.exerciseName === s.exerciseName &&
+                                ls.setNumber === s.setNumber
+                        );
+                        if (match) {
+                            await db.sets.update(match.clientId, {
+                                serverId: s._id,
+                                sessionServerId: serverSessionId,
+                                // align base values, keep local dirty if local differs
+                                reps: match.reps,
+                                weight: match.weight,
+                                completed: match.completed,
+                                completedAt: match.completed
+                                    ? (match.completedAt ?? Date.now())
+                                    : s.completedAt,
+                                updatedAt: Date.now(),
+                            });
+                        }
+                    }
+
+                    // Enqueue pending set mutations now that we have server ids
+                    const updatedLocalSets = await db.sets
+                        .where("sessionClientId")
+                        .equals(item.clientId)
+                        .toArray();
+                    for (const ls of updatedLocalSets) {
+                        if (!ls.serverId || !ls.dirty) continue;
+                        // If completed locally, ensure server gets it
+                        if (ls.completed) {
+                            await db.syncQueue.add({
+                                table: "sets",
+                                op: "complete",
+                                clientId: ls.clientId,
+                                payload: { setId: ls.serverId },
+                                ts: Date.now(),
+                                attempts: 0,
+                            });
+                        } else {
+                            // If reps/weight changed
+                            await db.syncQueue.add({
+                                table: "sets",
+                                op: "update",
+                                clientId: ls.clientId,
+                                payload: {
+                                    setId: ls.serverId,
+                                    reps: ls.reps,
+                                    weight: ls.weight,
+                                },
+                                ts: Date.now(),
+                                attempts: 0,
+                            });
+                        }
+                    }
+
+                    await db.syncQueue.delete(item.id!);
                 } else if (item.op === "update") {
                     const { sessionId, ...rest } = item.payload;
                     await convex.mutation(api.sessions.complete, {
@@ -62,6 +158,9 @@ async function pushDirty() {
                 } else if (item.op === "delete") {
                     await convex.mutation(api.sets.remove, item.payload);
                     await db.sets.update(item.clientId, { dirty: false });
+                } else if (item.op === "complete") {
+                    await convex.mutation(api.sets.complete, item.payload);
+                    await db.sets.update(item.clientId, { dirty: false });
                 }
             }
             await db.syncQueue.delete(item.id!);
@@ -69,9 +168,11 @@ async function pushDirty() {
             const attempts = (item.attempts ?? 0) + 1;
             await db.syncQueue.update(item.id!, { attempts });
             if (attempts >= 5) await db.syncQueue.delete(item.id!);
-            break; // stop on first failure this round
+            failed = true;
+            break; // stop this round
         }
     }
+    if (failed) throw new Error("push failed");
 }
 
 async function pullSince(table: TableName) {
@@ -163,12 +264,29 @@ async function pullSince(table: TableName) {
                     dirty: false,
                     serverId: s._id,
                 };
-                if (ex) await db.sets.update(ex.clientId, sbase);
-                else
-                    await db.sets.put({
-                        clientId: crypto.randomUUID(),
-                        ...sbase,
-                    });
+                if (ex) {
+                    await db.sets.update(ex.clientId, sbase);
+                } else {
+                    // try composite match for local-only rows
+                    const comp = await db.sets
+                        .where("sessionServerId")
+                        .equals(s.sessionId)
+                        .toArray();
+                    const byComposite = comp.find(
+                        (c) =>
+                            !c.serverId &&
+                            c.exerciseName === s.exerciseName &&
+                            c.setNumber === s.setNumber
+                    );
+                    if (byComposite) {
+                        await db.sets.update(byComposite.clientId, sbase);
+                    } else {
+                        await db.sets.put({
+                            clientId: crypto.randomUUID(),
+                            ...sbase,
+                        });
+                    }
+                }
             }
             const maxSetTs = Math.max(
                 setsSince,
@@ -187,10 +305,18 @@ async function pullSince(table: TableName) {
 }
 
 export async function syncOnce() {
-    if (!navigator.onLine) return;
-    await pushDirty();
-    await pullSince("workouts");
-    await pullSince("sessions");
+    if (!navigator.onLine) {
+        setReachable(false);
+        return;
+    }
+    try {
+        await pushDirty();
+        await pullSince("workouts");
+        await pullSince("sessions");
+        setReachable(true);
+    } catch {
+        setReachable(false);
+    }
 }
 
 export function startBackgroundSync() {

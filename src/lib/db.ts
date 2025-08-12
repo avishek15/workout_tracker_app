@@ -1,6 +1,6 @@
 import Dexie, { Table } from "dexie";
 
-export type OpType = "create" | "update" | "delete";
+export type OpType = "create" | "update" | "delete" | "complete";
 export type TableName = "workouts" | "sessions" | "sets";
 
 export interface LocalWorkout {
