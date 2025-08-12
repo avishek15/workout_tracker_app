@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Dumbbell, Share2, Globe, Lock } from "lucide-react";
+import { Dumbbell, Share2, Globe, Lock, Play, Trash2 } from "lucide-react";
 import { ShareWorkoutModal } from "./ShareWorkoutModal";
 
 interface WorkoutListProps {
@@ -157,52 +157,61 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                     </div>
 
                                     {/* Action Buttons */}
-                                    <div className="flex gap-2 w-full sm:w-auto">
+                                    <div className="grid grid-cols-2 gap-2 mt-4">
                                         <button
                                             onClick={() =>
                                                 void handleStartWorkout(
                                                     workout._id
                                                 )
                                             }
-                                            className="flex-1 sm:flex-none bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium text-sm font-source-sans"
+                                            className="flex items-center justify-center gap-2 px-4 py-3 bg-accent-primary text-white rounded-lg hover:bg-accent-primary/90 transition-colors font-medium text-sm"
                                         >
+                                            <Play className="w-4 h-4" />
                                             Start
                                         </button>
+
                                         <button
                                             onClick={() =>
                                                 handleShareWorkout(workout)
                                             }
-                                            className="flex-1 sm:flex-none bg-accent-secondary text-white px-4 py-2 rounded-lg hover:bg-accent-secondary/90 transition-colors font-medium text-sm font-source-sans flex items-center justify-center gap-1"
+                                            className="flex items-center justify-center gap-2 px-4 py-3 bg-accent-secondary text-white rounded-lg hover:bg-accent-secondary/90 transition-colors text-sm"
                                         >
                                             <Share2 className="w-4 h-4" />
                                             Share
                                         </button>
+
                                         <button
-                                            onClick={() => {
-                                                void handleTogglePublic(
-                                                    workout
-                                                );
-                                            }}
-                                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg transition-colors font-medium text-sm font-source-sans flex items-center justify-center gap-1 ${
+                                            onClick={() =>
+                                                void handleTogglePublic(workout)
+                                            }
+                                            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-colors text-sm ${
                                                 workout.isPublic
-                                                    ? "bg-text-secondary text-white hover:bg-text-secondary/90"
-                                                    : "bg-accent-secondary text-white hover:bg-accent-secondary/90"
+                                                    ? "bg-green-600 text-white hover:bg-green-700"
+                                                    : "bg-gray-600 text-white hover:bg-gray-700"
                                             }`}
                                         >
                                             {workout.isPublic ? (
-                                                <Lock className="w-4 h-4" />
+                                                <>
+                                                    <Globe className="w-4 h-4" />
+                                                    Public
+                                                </>
                                             ) : (
-                                                <Globe className="w-4 h-4" />
+                                                <>
+                                                    <Lock className="w-4 h-4" />
+                                                    Private
+                                                </>
                                             )}
                                         </button>
+
                                         <button
                                             onClick={() =>
                                                 void handleDeleteWorkout(
                                                     workout._id
                                                 )
                                             }
-                                            className="flex-1 sm:flex-none bg-danger text-white px-4 py-2 rounded-lg hover:bg-danger-hover transition-colors font-medium text-sm font-source-sans"
+                                            className="flex items-center justify-center gap-2 px-4 py-3 bg-danger text-white rounded-lg hover:bg-danger-hover transition-colors text-sm"
                                         >
+                                            <Trash2 className="w-4 h-4" />
                                             Delete
                                         </button>
                                     </div>
