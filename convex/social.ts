@@ -611,3 +611,250 @@ export const getFriendsPublicWorkouts = query({
         return workoutsWithUserData;
     },
 });
+
+// Get detailed friend profile
+export const getFriendProfile = query({
+    args: { friendUserId: v.id("users") },
+    returns: v.object({
+        // Basic Info
+        userId: v.id("users"),
+        name: v.optional(v.string()),
+        email: v.optional(v.string()),
+        image: v.optional(v.string()),
+        joinDate: v.number(),
+
+        // Activity Stats
+        totalWorkouts: v.number(),
+        currentStreak: v.number(),
+        averageWorkoutsPerWeek: v.number(),
+        favoriteExercises: v.array(v.string()),
+
+        // Recent Activity
+        recentSessions: v.array(
+            v.object({
+                _id: v.id("sessions"),
+                workoutName: v.string(),
+                startTime: v.number(),
+                endTime: v.optional(v.number()),
+                status: v.union(
+                    v.literal("active"),
+                    v.literal("completed"),
+                    v.literal("cancelled")
+                ),
+                totalSets: v.number(),
+            })
+        ),
+
+        // Public Workouts
+        publicWorkouts: v.array(
+            v.object({
+                _id: v.id("workouts"),
+                name: v.string(),
+                description: v.optional(v.string()),
+                exerciseCount: v.number(),
+                totalSets: v.number(),
+            })
+        ),
+    }),
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) {
+            throw new Error("Not authenticated");
+        }
+
+        // Verify friendship
+        const friendship1 = await ctx.db
+            .query("friendships")
+            .withIndex("by_user1_and_user2", (q) =>
+                q.eq("user1Id", userId).eq("user2Id", args.friendUserId)
+            )
+            .unique();
+
+        const friendship2 = await ctx.db
+            .query("friendships")
+            .withIndex("by_user1_and_user2", (q) =>
+                q.eq("user1Id", args.friendUserId).eq("user2Id", userId)
+            )
+            .unique();
+
+        if (!friendship1 && !friendship2) {
+            throw new Error("Can only view friends' profiles");
+        }
+
+        // Get friend's basic info
+        const friend = await ctx.db.get(args.friendUserId);
+        if (!friend) {
+            throw new Error("Friend not found");
+        }
+
+        // Handle image URL
+        let imageUrl: string | undefined;
+        if (friend.image) {
+            if (friend.image.startsWith("http")) {
+                imageUrl = friend.image;
+            } else {
+                try {
+                    const url = await ctx.storage.getUrl(friend.image as any);
+                    imageUrl = url || undefined;
+                } catch (error) {
+                    console.error("Failed to get image URL:", error);
+                    imageUrl = undefined;
+                }
+            }
+        }
+
+        // Get friend's completed sessions
+        const sessions = await ctx.db
+            .query("sessions")
+            .withIndex("by_user_and_status", (q) =>
+                q.eq("userId", args.friendUserId).eq("status", "completed")
+            )
+            .order("desc")
+            .collect();
+
+        // Calculate activity stats
+        const totalWorkouts = sessions.length;
+        const currentStreak = calculateCurrentStreak(sessions);
+        const averageWorkoutsPerWeek =
+            calculateAverageWorkoutsPerWeek(sessions);
+        const favoriteExercises = await getFavoriteExercises(
+            ctx,
+            args.friendUserId
+        );
+
+        // Get recent sessions (last 10)
+        const recentSessions = await Promise.all(
+            sessions.slice(0, 10).map(async (session) => {
+                const workout = await ctx.db.get(session.workoutId);
+                const sets = await ctx.db
+                    .query("sets")
+                    .withIndex("by_session", (q) =>
+                        q.eq("sessionId", session._id)
+                    )
+                    .collect();
+
+                return {
+                    _id: session._id,
+                    workoutName: workout?.name || "Unknown Workout",
+                    startTime: session.startTime,
+                    endTime: session.endTime,
+                    status: session.status,
+                    totalSets: sets.length,
+                };
+            })
+        );
+
+        // Get public workouts
+        const publicWorkouts = await ctx.db
+            .query("workouts")
+            .withIndex("by_user", (q) => q.eq("userId", args.friendUserId))
+            .filter((q) => q.eq(q.field("isPublic"), true))
+            .collect();
+
+        const publicWorkoutsWithStats = publicWorkouts.map((workout) => ({
+            _id: workout._id,
+            name: workout.name,
+            description: workout.description,
+            exerciseCount: workout.exercises.length,
+            totalSets: workout.exercises.reduce(
+                (sum, ex) => sum + ex.targetSets,
+                0
+            ),
+        }));
+
+        return {
+            userId: args.friendUserId,
+            name: friend.name,
+            email: friend.email,
+            image: imageUrl,
+            joinDate: friend._creationTime,
+            totalWorkouts,
+            currentStreak,
+            averageWorkoutsPerWeek,
+            favoriteExercises,
+            recentSessions,
+            publicWorkouts: publicWorkoutsWithStats,
+        };
+    },
+});
+
+// Helper function to calculate current streak
+function calculateCurrentStreak(sessions: any[]): number {
+    if (sessions.length === 0) return 0;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let streak = 0;
+    const currentDate = new Date(today);
+
+    for (let i = 0; i < 30; i++) {
+        // Check last 30 days max
+        const dayStart = currentDate.getTime();
+        const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+
+        const hasWorkout = sessions.some(
+            (session) =>
+                session.endTime &&
+                session.endTime >= dayStart &&
+                session.endTime < dayEnd
+        );
+
+        if (hasWorkout) {
+            streak++;
+            currentDate.setDate(currentDate.getDate() - 1);
+        } else {
+            break;
+        }
+    }
+
+    return streak;
+}
+
+// Helper function to calculate average workouts per week
+function calculateAverageWorkoutsPerWeek(sessions: any[]): number {
+    if (sessions.length === 0) return 0;
+
+    const now = Date.now();
+    const fourWeeksAgo = now - 4 * 7 * 24 * 60 * 60 * 1000;
+
+    const recentSessions = sessions.filter(
+        (session) => session.endTime && session.endTime >= fourWeeksAgo
+    );
+
+    return Math.round((recentSessions.length / 4) * 10) / 10; // Round to 1 decimal
+}
+
+// Helper function to get favorite exercises
+async function getFavoriteExercises(
+    ctx: any,
+    userId: string
+): Promise<string[]> {
+    const sessions = await ctx.db
+        .query("sessions")
+        .withIndex("by_user_and_status", (q: any) =>
+            q.eq("userId", userId).eq("status", "completed")
+        )
+        .collect();
+
+    const exerciseCounts: Record<string, number> = {};
+
+    for (const session of sessions.slice(0, 50)) {
+        // Check last 50 sessions
+        const sets = await ctx.db
+            .query("sets")
+            .withIndex("by_session", (q: any) => q.eq("sessionId", session._id))
+            .collect();
+
+        for (const set of sets) {
+            exerciseCounts[set.exerciseName] =
+                (exerciseCounts[set.exerciseName] || 0) + 1;
+        }
+    }
+
+    // Return top 5 favorite exercises
+    return Object.entries(exerciseCounts)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5)
+        .map(([exercise]) => exercise);
+}
