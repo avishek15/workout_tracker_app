@@ -3,6 +3,15 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
+
+type Exercise = {
+    name: string;
+    targetSets: number;
+    targetReps?: number;
+    targetWeight?: number;
+    restTime?: number;
+};
 
 export function SharedWorkouts() {
     const [expandedWorkout, setExpandedWorkout] = useState<string | null>(null);
@@ -13,18 +22,22 @@ export function SharedWorkouts() {
     const handleAccept = async (sharedWorkoutId: Id<"sharedWorkouts">) => {
         try {
             await acceptSharedWorkout({ sharedWorkoutId });
-            alert("Workout copied to your library!");
+            toast.success("Workout copied to your library!");
         } catch (error) {
-            alert("Failed to accept workout: " + (error as Error).message);
+            toast.error(
+                "Failed to accept workout: " + (error as Error).message
+            );
         }
     };
 
     const handleReject = async (sharedWorkoutId: Id<"sharedWorkouts">) => {
         try {
             await rejectSharedWorkout({ sharedWorkoutId });
-            alert("Workout rejected");
+            toast.success("Workout rejected");
         } catch (error) {
-            alert("Failed to reject workout: " + (error as Error).message);
+            toast.error(
+                "Failed to reject workout: " + (error as Error).message
+            );
         }
     };
 
@@ -53,7 +66,7 @@ export function SharedWorkouts() {
                     {sharedWorkouts.map((shared) => {
                         const isExpanded = expandedWorkout === shared._id;
                         const totalSets = shared.workout.exercises.reduce(
-                            (sum, ex) => sum + ex.targetSets,
+                            (sum: number, ex: Exercise) => sum + ex.targetSets,
                             0
                         );
 
@@ -159,7 +172,10 @@ export function SharedWorkouts() {
                                         )}
                                         <div className="space-y-1">
                                             {shared.workout.exercises.map(
-                                                (exercise, index) => (
+                                                (
+                                                    exercise: Exercise,
+                                                    index: number
+                                                ) => (
                                                     <div
                                                         key={index}
                                                         className="text-sm text-text-secondary bg-background-primary rounded p-2"

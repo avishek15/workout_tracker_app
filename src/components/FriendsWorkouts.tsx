@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 
 export function FriendsWorkouts() {
     const [expandedWorkout, setExpandedWorkout] = useState<string | null>(null);
@@ -15,9 +16,9 @@ export function FriendsWorkouts() {
     ) => {
         try {
             await shareWorkout({ workoutId, friendUserId });
-            alert("Workout shared successfully!");
+            toast.success("Workout shared successfully!");
         } catch (error) {
-            alert("Failed to share workout: " + (error as Error).message);
+            toast.error("Failed to share workout: " + (error as Error).message);
         }
     };
 

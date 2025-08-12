@@ -2,6 +2,12 @@ import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
+import {
+    getUserDisplayUnit,
+    convertToUserUnit,
+    convertFromUserUnit,
+    formatWeightForUser,
+} from "../lib/unitConversion";
 
 interface Exercise {
     name: string;
@@ -206,18 +212,27 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
 
                         <div>
                             <label className="block text-sm font-medium text-text-secondary mb-1 font-source-sans">
-                                Target Weight (kg)
+                                Target Weight ({getUserDisplayUnit()})
                             </label>
                             <input
                                 type="number"
                                 min="0"
                                 step="0.5"
-                                value={currentExercise.targetWeight || ""}
+                                value={
+                                    currentExercise.targetWeight
+                                        ? convertToUserUnit(
+                                              currentExercise.targetWeight,
+                                              "kg"
+                                          )
+                                        : ""
+                                }
                                 onChange={(e) =>
                                     setCurrentExercise({
                                         ...currentExercise,
                                         targetWeight: e.target.value
-                                            ? parseFloat(e.target.value)
+                                            ? convertFromUserUnit(
+                                                  parseFloat(e.target.value)
+                                              )
                                             : undefined,
                                     })
                                 }
@@ -278,7 +293,7 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                                             {exercise.targetReps &&
                                                 ` × ${exercise.targetReps} reps`}
                                             {exercise.targetWeight &&
-                                                ` @ ${exercise.targetWeight}kg`}
+                                                ` @ ${formatWeightForUser(exercise.targetWeight, "kg")}`}
                                             {exercise.restTime &&
                                                 ` (${exercise.restTime}s rest)`}
                                         </span>

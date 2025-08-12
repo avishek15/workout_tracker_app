@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { toast } from "sonner";
 
 interface ShareWorkoutProps {
     friend: {
@@ -18,7 +19,7 @@ export function ShareWorkout({ friend, onShare, onClose }: ShareWorkoutProps) {
 
     const handleShare = async () => {
         if (!selectedWorkoutId) {
-            alert("Please select a workout to share");
+            toast.error("Please select a workout to share");
             return;
         }
         await onShare(selectedWorkoutId, friend.userId);
@@ -65,7 +66,9 @@ export function ShareWorkout({ friend, onShare, onClose }: ShareWorkoutProps) {
 
                 <div className="flex space-x-2">
                     <button
-                        onClick={handleShare}
+                        onClick={() => {
+                            void handleShare();
+                        }}
                         disabled={!selectedWorkoutId}
                         className="px-4 py-2 bg-accent-primary text-white rounded-md hover:bg-accent-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >

@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { X } from "lucide-react";
+import type { Id } from "../../convex/_generated/dataModel";
+
+import { toast } from "sonner";
 
 interface ShareWorkoutModalProps {
     workout: any;
@@ -18,19 +21,19 @@ export function ShareWorkoutModal({
 
     const handleShare = async () => {
         if (!selectedFriendId) {
-            alert("Please select a friend to share with");
+            toast.error("Please select a friend to share with");
             return;
         }
 
         try {
             await shareWorkout({
-                workoutId: workout._id as any,
-                friendUserId: selectedFriendId as any,
+                workoutId: workout._id,
+                friendUserId: selectedFriendId as Id<"users">,
             });
-            alert("Workout shared successfully!");
+            toast.success("Workout shared successfully!");
             onClose();
         } catch (error) {
-            alert("Failed to share workout: " + (error as Error).message);
+            toast.error("Failed to share workout: " + (error as Error).message);
         }
     };
 
@@ -95,7 +98,9 @@ export function ShareWorkoutModal({
 
                     <div className="flex space-x-2">
                         <button
-                            onClick={handleShare}
+                            onClick={() => {
+                                void handleShare();
+                            }}
                             disabled={!selectedFriendId || friends.length === 0}
                             className="flex-1 px-4 py-2 bg-accent-primary text-white rounded-md hover:bg-accent-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >

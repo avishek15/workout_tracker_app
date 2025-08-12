@@ -15,6 +15,7 @@ import {
     Pie,
     Cell,
 } from "recharts";
+import { formatWeightForUser } from "../lib/unitConversion";
 
 type TimeRange = "week" | "month" | "year" | "all";
 
@@ -348,7 +349,7 @@ export function ProgressDashboard() {
                             </h4>
                             <p className="text-gray-600">
                                 {weightProgress && weightProgress.length > 0
-                                    ? `Latest: ${weightProgress[weightProgress.length - 1]?.weight} lbs`
+                                    ? `Latest: ${formatWeightForUser(weightProgress[weightProgress.length - 1]?.weight || 0, "kg")}`
                                     : "No data available"}
                             </p>
                         </div>
@@ -360,7 +361,7 @@ export function ProgressDashboard() {
                             </h4>
                             <p className="text-gray-600">
                                 {volumeProgress && volumeProgress.length > 0
-                                    ? `Latest: ${volumeProgress[volumeProgress.length - 1]?.volume.toLocaleString()} lbs`
+                                    ? `Latest: ${formatWeightForUser(volumeProgress[volumeProgress.length - 1]?.volume || 0, "kg")}`
                                     : "No data available"}
                             </p>
                         </div>

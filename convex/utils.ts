@@ -64,7 +64,9 @@ export const getImageUrl = internalQuery({
         }
 
         try {
-            const url = await ctx.storage.getUrl(args.imageId as any);
+            const url = await ctx.storage.getUrl(
+                args.imageId as Id<"_storage">
+            );
             return url;
         } catch (error) {
             console.error("Failed to get image URL:", error);

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import { toast } from "sonner";
 
 type RequestTab = "received" | "sent";
 
@@ -16,18 +17,22 @@ export function FriendRequests() {
     const handleAccept = async (requestId: Id<"friendRequests">) => {
         try {
             await acceptRequest({ requestId });
-            alert("Friend request accepted!");
+            toast.success("Friend request accepted!");
         } catch (error) {
-            alert("Failed to accept request: " + (error as Error).message);
+            toast.error(
+                "Failed to accept request: " + (error as Error).message
+            );
         }
     };
 
     const handleReject = async (requestId: Id<"friendRequests">) => {
         try {
             await rejectRequest({ requestId });
-            alert("Friend request rejected");
+            toast.success("Friend request rejected");
         } catch (error) {
-            alert("Failed to reject request: " + (error as Error).message);
+            toast.error(
+                "Failed to reject request: " + (error as Error).message
+            );
         }
     };
 
