@@ -31,11 +31,38 @@ export const list = query({
             return [];
         }
 
-        return await ctx.db
+        const sessions = await ctx.db
             .query("sessions")
             .withIndex("by_user", (q) => q.eq("userId", userId))
             .order("desc")
             .collect();
+
+        // Fetch workout data and sets for each session
+        const sessionsWithData = await Promise.all(
+            sessions.map(async (session) => {
+                const workout = await ctx.db.get(session.workoutId);
+                const sets = await ctx.db
+                    .query("sets")
+                    .withIndex("by_session", (q) =>
+                        q.eq("sessionId", session._id)
+                    )
+                    .collect();
+
+                return {
+                    ...session,
+                    workout: workout
+                        ? {
+                              _id: workout._id,
+                              name: workout.name,
+                              description: workout.description,
+                          }
+                        : null,
+                    sets,
+                };
+            })
+        );
+
+        return sessionsWithData;
     },
 });
 
@@ -58,9 +85,19 @@ export const get = query({
             .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
             .collect();
 
+        // Fetch workout data
+        const workout = await ctx.db.get(session.workoutId);
+
         return {
             ...session,
             sets,
+            workout: workout
+                ? {
+                      _id: workout._id,
+                      name: workout.name,
+                      description: workout.description,
+                  }
+                : null,
         };
     },
 });
