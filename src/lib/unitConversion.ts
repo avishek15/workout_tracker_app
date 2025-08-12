@@ -136,6 +136,6 @@ export function roundWeight(value: number, unit: WeightUnit): number {
     if (unit === "kg") {
         return Math.round(value * 10) / 10; // 1 decimal place
     } else {
-        return Math.round(value); // Whole numbers for lbs
+        return Math.round(value * 10) / 10; // 1 decimal place for lbs too
     }
 }

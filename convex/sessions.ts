@@ -201,6 +201,7 @@ export const start = mutation({
                     setNumber,
                     reps: exercise.targetReps || 0,
                     weight: exercise.targetWeight,
+                    weightUnit: "kg", // Default to kg for workout template weights
                     completed: false,
                     updatedAt: Date.now(),
                 });

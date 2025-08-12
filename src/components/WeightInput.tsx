@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { cn } from "../lib/utils";
 import {
     convertToKgFromUnit,
+    convertFromKgToUnit,
     validateWeight,
     roundWeight,
     formatValueInUnit,
@@ -71,7 +72,7 @@ export function WeightInput({
         if (inputValue && !isNaN(parseFloat(inputValue))) {
             const currentValue = parseFloat(inputValue);
             const kgValue = convertToKgFromUnit(currentValue, currentUnit);
-            const newDisplayValue = convertToKgFromUnit(kgValue, newUnit);
+            const newDisplayValue = convertFromKgToUnit(kgValue, newUnit);
             const roundedValue = roundWeight(newDisplayValue, newUnit);
 
             setInputValue(roundedValue.toString());
@@ -108,8 +109,8 @@ export function WeightInput({
                         isValid && "border-accent-primary/20",
                         disabled && "opacity-50 cursor-not-allowed"
                     )}
-                    step={currentUnit === "kg" ? "0.1" : "1"}
                     min="0"
+                    step="any"
                 />
                 {!isValid && (
                     <div className="absolute -bottom-6 left-0 text-xs text-red-500">
