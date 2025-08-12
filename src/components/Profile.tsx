@@ -4,6 +4,7 @@ import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { User, Camera, Save, AlertCircle, Loader2 } from "lucide-react";
 import { useAuthActions } from "@convex-dev/auth/react";
+import { UnitToggle } from "./UnitToggle";
 
 // Utility functions
 const validateImageFile = (file: File): string | null => {
@@ -405,6 +406,17 @@ export function Profile() {
                         )}
                         <p className="text-xs text-text-muted mt-1 font-source-sans">
                             {bio.length}/500 characters
+                        </p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-2 font-source-sans">
+                            Weight Unit Preference
+                        </label>
+                        <UnitToggle size="md" showLabel={false} />
+                        <p className="text-xs text-text-muted mt-1 font-source-sans">
+                            This setting affects how weights are displayed
+                            throughout the app
                         </p>
                     </div>
 

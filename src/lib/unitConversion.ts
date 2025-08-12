@@ -134,8 +134,8 @@ export function validateWeight(value: number, unit: WeightUnit): boolean {
  */
 export function roundWeight(value: number, unit: WeightUnit): number {
     if (unit === "kg") {
-        return Math.round(value * 10) / 10; // 1 decimal place
+        return Math.round(value * 1000) / 1000; // 3 decimal places
     } else {
-        return Math.round(value * 10) / 10; // 1 decimal place for lbs too
+        return Math.round(value * 1000) / 1000; // 3 decimal places for lbs too
     }
 }

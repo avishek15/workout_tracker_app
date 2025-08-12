@@ -5,6 +5,7 @@ import {
     type WeightUnit,
 } from "../lib/unitConversion";
 import { cn } from "../lib/utils";
+import { toast } from "sonner";
 
 interface UnitToggleProps {
     className?: string;
@@ -29,6 +30,9 @@ export function UnitToggle({
         setDefaultWeightUnit(newUnit);
         setCurrentUnit(newUnit);
         onUnitChange?.(newUnit);
+
+        // Show toast notification
+        toast.success(`Weight unit changed to ${newUnit.toUpperCase()}`);
 
         // Trigger a custom event to notify other components
         window.dispatchEvent(

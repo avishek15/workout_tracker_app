@@ -4,6 +4,12 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { Dumbbell, Share2, Globe, Lock, Play, Trash2 } from "lucide-react";
 import { ShareWorkoutModal } from "./ShareWorkoutModal";
+import {
+    convertFromKgToUnit,
+    convertToKgFromUnit,
+    getDefaultWeightUnit,
+    roundWeight,
+} from "../lib/unitConversion";
 
 interface WorkoutListProps {
     onCreateNew: () => void;
@@ -298,7 +304,32 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                                                 {exercise.targetReps &&
                                                                     ` × ${exercise.targetReps} reps`}
                                                                 {exercise.targetWeight &&
-                                                                    ` @ ${exercise.targetWeight}lbs`}
+                                                                    (() => {
+                                                                        const preferredUnit =
+                                                                            getDefaultWeightUnit();
+                                                                        const storedUnit =
+                                                                            exercise.targetWeightUnit ||
+                                                                            "kg";
+
+                                                                        if (
+                                                                            storedUnit ===
+                                                                            preferredUnit
+                                                                        ) {
+                                                                            return ` @ ${roundWeight(exercise.targetWeight, preferredUnit)} ${preferredUnit}`;
+                                                                        } else {
+                                                                            const convertedWeight =
+                                                                                convertToKgFromUnit(
+                                                                                    exercise.targetWeight,
+                                                                                    storedUnit
+                                                                                );
+                                                                            const finalWeight =
+                                                                                convertFromKgToUnit(
+                                                                                    convertedWeight,
+                                                                                    preferredUnit
+                                                                                );
+                                                                            return ` @ ${roundWeight(finalWeight, preferredUnit)} ${preferredUnit}`;
+                                                                        }
+                                                                    })()}
                                                             </div>
                                                         </div>
                                                     </div>

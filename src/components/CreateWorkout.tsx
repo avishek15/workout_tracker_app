@@ -2,18 +2,15 @@ import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
-import {
-    getUserDisplayUnit,
-    convertToKg,
-    convertFromKg,
-    formatKgForUser,
-} from "../lib/unitConversion";
+
+import { WeightInput } from "./WeightInput";
 
 interface Exercise {
     name: string;
     targetSets: number;
     targetReps?: number;
     targetWeight?: number;
+    targetWeightUnit?: "kg" | "lbs";
     restTime?: number;
 }
 
@@ -31,6 +28,7 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
         targetSets: 3,
         targetReps: 10,
         targetWeight: undefined,
+        targetWeightUnit: "kg",
         restTime: 60,
     });
 
@@ -48,6 +46,7 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
             targetSets: 3,
             targetReps: 10,
             targetWeight: undefined,
+            targetWeightUnit: "kg",
             restTime: 60,
         });
     };
@@ -212,27 +211,21 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
 
                         <div>
                             <label className="block text-sm font-medium text-text-secondary mb-1 font-source-sans">
-                                Target Weight ({getUserDisplayUnit()})
+                                Target Weight
                             </label>
-                            <input
-                                type="number"
-                                min="0"
-                                step="0.5"
-                                value={
-                                    currentExercise.targetWeight
-                                        ? convertFromKg(currentExercise.targetWeight)
-                                        : ""
-                                }
-                                onChange={(e) =>
+                            <WeightInput
+                                value={currentExercise.targetWeight}
+                                unit={currentExercise.targetWeightUnit}
+                                onWeightChange={(weight, unit) =>
                                     setCurrentExercise({
                                         ...currentExercise,
-                                        targetWeight: e.target.value
-                                            ? convertToKg(parseFloat(e.target.value))
-                                            : undefined,
+                                        targetWeight:
+                                            weight > 0 ? weight : undefined,
+                                        targetWeightUnit: unit,
                                     })
                                 }
-                                className="w-full px-3 py-2 border border-accent-primary/30 rounded-lg focus:ring-2 focus:ring-accent-primary focus:border-transparent bg-background-primary text-text-primary"
                                 placeholder="Optional"
+                                showUnitToggle={true}
                             />
                         </div>
 
@@ -288,7 +281,7 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                                             {exercise.targetReps &&
                                                 ` × ${exercise.targetReps} reps`}
                                             {exercise.targetWeight &&
-                                                ` @ ${formatKgForUser(exercise.targetWeight)}`}
+                                                ` @ ${exercise.targetWeight} ${exercise.targetWeightUnit || "kg"}`}
                                             {exercise.restTime &&
                                                 ` (${exercise.restTime}s rest)`}
                                         </span>

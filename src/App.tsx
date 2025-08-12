@@ -19,12 +19,11 @@ import {
     Users,
     Settings,
 } from "lucide-react";
-import { WeightInputDemo } from "./components/WeightInputDemo";
 
 function App() {
     const { isAuthenticated, isLoading } = useConvexAuth();
     const [activeTab, setActiveTab] = useState<
-        "workouts" | "progress" | "social" | "history" | "profile" | "test"
+        "workouts" | "progress" | "social" | "history" | "profile"
     >("workouts");
     const [showMobileNav, setShowMobileNav] = useState(false);
 
@@ -205,20 +204,6 @@ function App() {
                                         <User className="w-4 h-4" />
                                         <span>Profile</span>
                                     </button>
-                                    <button
-                                        onClick={() => {
-                                            setActiveTab("test");
-                                            setShowMobileNav(false);
-                                        }}
-                                        className={`w-full px-4 py-3 text-left flex items-center space-x-3 transition-colors font-source-sans ${
-                                            activeTab === "test"
-                                                ? "bg-accent-primary/10 text-accent-primary"
-                                                : "text-text-primary hover:bg-background-primary"
-                                        }`}
-                                    >
-                                        <Settings className="w-4 h-4" />
-                                        <span>Test Units</span>
-                                    </button>
                                 </div>
                             </div>
                         )}
@@ -304,19 +289,6 @@ function App() {
                                     <span>Profile</span>
                                 </div>
                             </button>
-                            <button
-                                onClick={() => setActiveTab("test")}
-                                className={`py-4 px-2 sm:px-1 border-b-2 font-medium text-sm transition-colors font-source-sans whitespace-nowrap flex-shrink-0 ${
-                                    activeTab === "test"
-                                        ? "border-accent-primary text-accent-primary"
-                                        : "border-transparent text-text-secondary hover:text-text-primary hover:border-accent-primary/50"
-                                }`}
-                            >
-                                <div className="flex items-center space-x-1 sm:space-x-2">
-                                    <Settings className="w-4 h-4" />
-                                    <span>Test Units</span>
-                                </div>
-                            </button>
                         </div>
                     </nav>
                 </div>
@@ -330,7 +302,6 @@ function App() {
                     {activeTab === "progress" && <ProgressDashboard />}
                     {activeTab === "social" && <Social />}
                     {activeTab === "profile" && <Profile />}
-                    {activeTab === "test" && <WeightInputDemo />}
                 </div>
             </main>
             <Toaster position="top-right" />

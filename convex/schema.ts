@@ -19,6 +19,9 @@ const applicationTables = {
                 targetSets: v.number(),
                 targetReps: v.optional(v.number()),
                 targetWeight: v.optional(v.number()),
+                targetWeightUnit: v.optional(
+                    v.union(v.literal("kg"), v.literal("lbs"))
+                ),
                 restTime: v.optional(v.number()),
             })
         ),
