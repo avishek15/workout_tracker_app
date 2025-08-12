@@ -5,6 +5,8 @@ import { AddFriend } from "./AddFriend";
 import { SharedWorkouts } from "./SharedWorkouts";
 import { FriendsWorkouts } from "./FriendsWorkouts";
 import { SocialDashboard } from "./SocialDashboard";
+import { ComparisonDashboard } from "./ComparisonDashboard";
+import { Achievements } from "./Achievements";
 
 type Tab =
     | "dashboard"
@@ -12,7 +14,9 @@ type Tab =
     | "requests"
     | "add"
     | "shared"
-    | "friends-workouts";
+    | "friends-workouts"
+    | "comparison"
+    | "achievements";
 
 export function Social() {
     const [activeTab, setActiveTab] = useState<Tab>("dashboard");
@@ -24,6 +28,8 @@ export function Social() {
         { id: "add" as const, label: "Add Friend" },
         { id: "shared" as const, label: "Shared with Me" },
         { id: "friends-workouts" as const, label: "Friends' Workouts" },
+        { id: "comparison" as const, label: "Compare Progress" },
+        { id: "achievements" as const, label: "Achievements" },
     ];
 
     const renderTabContent = () => {
@@ -40,6 +46,10 @@ export function Social() {
                 return <SharedWorkouts />;
             case "friends-workouts":
                 return <FriendsWorkouts />;
+            case "comparison":
+                return <ComparisonDashboard />;
+            case "achievements":
+                return <Achievements />;
             default:
                 return <SocialDashboard />;
         }
