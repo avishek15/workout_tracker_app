@@ -42,6 +42,7 @@ export const create = mutation({
         return await ctx.db.insert("workouts", {
             ...args,
             userId,
+            updatedAt: Date.now(),
         });
     },
 });
@@ -74,7 +75,7 @@ export const update = mutation({
         }
 
         const { id, ...updates } = args;
-        await ctx.db.patch(id, updates);
+        await ctx.db.patch(id, { ...updates, updatedAt: Date.now() });
     },
 });
 

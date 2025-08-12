@@ -1,8 +1,29 @@
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-// Update a set's reps and weight
+// Get all sets for a session
+export const list = query({
+    args: { sessionId: v.id("sessions") },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) {
+            throw new Error("Not authenticated");
+        }
+
+        const session = await ctx.db.get(args.sessionId);
+        if (!session || session.userId !== userId) {
+            throw new Error("Session not found or not authorized");
+        }
+
+        return await ctx.db
+            .query("sets")
+            .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
+            .collect();
+    },
+});
+
+// Update a set
 export const update = mutation({
     args: {
         setId: v.id("sets"),
@@ -28,6 +49,7 @@ export const update = mutation({
         await ctx.db.patch(args.setId, {
             reps: args.reps,
             weight: args.weight,
+            updatedAt: Date.now(),
         });
     },
 });
@@ -54,6 +76,7 @@ export const complete = mutation({
         await ctx.db.patch(args.setId, {
             completed: true,
             completedAt: Date.now(),
+            updatedAt: Date.now(),
         });
     },
 });
@@ -99,6 +122,7 @@ export const add = mutation({
             reps: args.reps,
             weight: args.weight,
             completed: false,
+            updatedAt: Date.now(),
         });
     },
 });

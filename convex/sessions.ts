@@ -2,75 +2,64 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
+// Get active session for the current user
+export const getActive = query({
+    args: {},
+    handler: async (ctx) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) {
+            return null;
+        }
+
+        const activeSessions = await ctx.db
+            .query("sessions")
+            .withIndex("by_user_and_status", (q) =>
+                q.eq("userId", userId).eq("status", "active")
+            )
+            .collect();
+
+        return activeSessions[0] || null;
+    },
+});
+
 // Get all sessions for the current user
 export const list = query({
     args: {},
     handler: async (ctx) => {
         const userId = await getAuthUserId(ctx);
         if (!userId) {
-            throw new Error("Not authenticated");
+            return [];
         }
 
-        const sessions = await ctx.db
+        return await ctx.db
             .query("sessions")
             .withIndex("by_user", (q) => q.eq("userId", userId))
             .order("desc")
             .collect();
-
-        // Get workout details and sets for each session
-        const sessionsWithWorkouts = await Promise.all(
-            sessions.map(async (session) => {
-                const workout = await ctx.db.get(session.workoutId);
-                const sets = await ctx.db
-                    .query("sets")
-                    .withIndex("by_session", (q) =>
-                        q.eq("sessionId", session._id)
-                    )
-                    .collect();
-
-                return {
-                    ...session,
-                    workout,
-                    sets,
-                };
-            })
-        );
-
-        return sessionsWithWorkouts;
     },
 });
 
-// Get the current active session
-export const getActive = query({
-    args: {},
-    handler: async (ctx) => {
+// Get a specific session with its sets
+export const get = query({
+    args: { sessionId: v.id("sessions") },
+    handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
         if (!userId) {
             throw new Error("Not authenticated");
         }
 
-        const activeSession = await ctx.db
-            .query("sessions")
-            .withIndex("by_user_and_status", (q) =>
-                q.eq("userId", userId).eq("status", "active")
-            )
-            .first();
-
-        if (!activeSession) {
-            return null;
+        const session = await ctx.db.get(args.sessionId);
+        if (!session || session.userId !== userId) {
+            throw new Error("Session not found or not authorized");
         }
 
-        const workout = await ctx.db.get(activeSession.workoutId);
         const sets = await ctx.db
             .query("sets")
-            .withIndex("by_session", (q) =>
-                q.eq("sessionId", activeSession._id)
-            )
+            .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
             .collect();
 
         return {
-            ...activeSession,
-            workout,
+            ...session,
             sets,
         };
     },
@@ -85,18 +74,6 @@ export const start = mutation({
             throw new Error("Not authenticated");
         }
 
-        // Check if there's already an active session
-        const activeSession = await ctx.db
-            .query("sessions")
-            .withIndex("by_user_and_status", (q) =>
-                q.eq("userId", userId).eq("status", "active")
-            )
-            .first();
-
-        if (activeSession) {
-            throw new Error("You already have an active workout session");
-        }
-
         const workout = await ctx.db.get(args.workoutId);
         if (!workout || workout.userId !== userId) {
             throw new Error("Workout not found or not authorized");
@@ -107,6 +84,7 @@ export const start = mutation({
             userId,
             startTime: Date.now(),
             status: "active",
+            updatedAt: Date.now(),
         });
 
         // Create initial sets for each exercise
@@ -123,6 +101,7 @@ export const start = mutation({
                     reps: exercise.targetReps || 0,
                     weight: exercise.targetWeight,
                     completed: false,
+                    updatedAt: Date.now(),
                 });
             }
         }
@@ -152,6 +131,7 @@ export const complete = mutation({
             status: "completed",
             endTime: Date.now(),
             notes: args.notes,
+            updatedAt: Date.now(),
         });
     },
 });
@@ -173,6 +153,7 @@ export const cancel = mutation({
         await ctx.db.patch(args.sessionId, {
             status: "cancelled",
             endTime: Date.now(),
+            updatedAt: Date.now(),
         });
     },
 });
@@ -201,7 +182,6 @@ export const deleteSession = mutation({
             await ctx.db.delete(set._id);
         }
 
-        // Delete the session
         await ctx.db.delete(args.sessionId);
     },
 });

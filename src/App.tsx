@@ -1,11 +1,12 @@
 import { useConvexAuth } from "convex/react";
-import { SignInForm } from "./components/SignInForm";
-import { SignOutButton } from "./components/SignOutButton";
+// import { SignInForm } from "./components/SignInForm";
+// import { SignOutButton } from "./components/SignOutButton";
 import { UserProfileHeader } from "./components/UserProfileHeader";
 import { WorkoutDashboard } from "./components/WorkoutDashboard";
 import { ProgressDashboard } from "./components/ProgressDashboard";
 import { SessionHistory } from "./components/SessionHistory";
 import { Profile } from "./components/Profile";
+import { Social } from "./components/Social";
 import { LandingPage } from "./LandingPage";
 import { useState } from "react";
 import { Toaster } from "sonner";
@@ -15,12 +16,13 @@ import {
     Clock,
     BarChart3,
     User,
+    Users,
 } from "lucide-react";
 
 function App() {
     const { isAuthenticated, isLoading } = useConvexAuth();
     const [activeTab, setActiveTab] = useState<
-        "workouts" | "progress" | "history" | "profile"
+        "workouts" | "progress" | "social" | "history" | "profile"
     >("workouts");
     const [showMobileNav, setShowMobileNav] = useState(false);
 
@@ -106,6 +108,14 @@ function App() {
                                         </span>
                                     </>
                                 )}
+                                {activeTab === "social" && (
+                                    <>
+                                        <Users className="w-4 h-4" />
+                                        <span className="text-accent-primary">
+                                            Social
+                                        </span>
+                                    </>
+                                )}
                                 {activeTab === "profile" && (
                                     <>
                                         <User className="w-4 h-4" />
@@ -164,6 +174,20 @@ function App() {
                                     >
                                         <BarChart3 className="w-4 h-4" />
                                         <span>Progress</span>
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setActiveTab("social");
+                                            setShowMobileNav(false);
+                                        }}
+                                        className={`w-full px-4 py-3 text-left flex items-center space-x-3 transition-colors font-source-sans ${
+                                            activeTab === "social"
+                                                ? "bg-accent-primary/10 text-accent-primary"
+                                                : "text-text-primary hover:bg-background-primary"
+                                        }`}
+                                    >
+                                        <Users className="w-4 h-4" />
+                                        <span>Social</span>
                                     </button>
                                     <button
                                         onClick={() => {
@@ -239,6 +263,19 @@ function App() {
                                 </div>
                             </button>
                             <button
+                                onClick={() => setActiveTab("social")}
+                                className={`py-4 px-2 sm:px-1 border-b-2 font-medium text-sm transition-colors font-source-sans whitespace-nowrap flex-shrink-0 ${
+                                    activeTab === "social"
+                                        ? "border-accent-primary text-accent-primary"
+                                        : "border-transparent text-text-secondary hover:text-text-primary hover:border-accent-primary/50"
+                                }`}
+                            >
+                                <div className="flex items-center space-x-1 sm:space-x-2">
+                                    <Users className="w-4 h-4" />
+                                    <span>Social</span>
+                                </div>
+                            </button>
+                            <button
                                 onClick={() => setActiveTab("profile")}
                                 className={`py-4 px-2 sm:px-1 border-b-2 font-medium text-sm transition-colors font-source-sans whitespace-nowrap flex-shrink-0 ${
                                     activeTab === "profile"
@@ -262,6 +299,7 @@ function App() {
                     {activeTab === "workouts" && <WorkoutDashboard />}
                     {activeTab === "history" && <SessionHistory />}
                     {activeTab === "progress" && <ProgressDashboard />}
+                    {activeTab === "social" && <Social />}
                     {activeTab === "profile" && <Profile />}
                 </div>
             </main>
