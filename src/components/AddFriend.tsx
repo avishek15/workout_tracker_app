@@ -2,7 +2,11 @@ import React, { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
-export function AddFriend() {
+interface AddFriendProps {
+    onClose: () => void;
+}
+
+export function AddFriend({ onClose }: AddFriendProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const sendFriendRequest = useMutation(api.social.sendFriendRequest);
     const searchUsers = useQuery(api.social.searchUsers, {

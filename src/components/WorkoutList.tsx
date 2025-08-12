@@ -2,7 +2,8 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Dumbbell } from "lucide-react";
+import { Dumbbell, Share2, Globe, Lock } from "lucide-react";
+import { ShareWorkoutModal } from "./ShareWorkoutModal";
 
 interface WorkoutListProps {
     onCreateNew: () => void;
@@ -12,7 +13,10 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
     const workouts = useQuery(api.workouts.list);
     const startSession = useMutation(api.sessions.start);
     const deleteWorkout = useMutation(api.workouts.remove);
+    const updateWorkout = useMutation(api.workouts.update);
     const [expandedWorkout, setExpandedWorkout] = useState<string | null>(null);
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [selectedWorkout, setSelectedWorkout] = useState<any>(null);
 
     const handleStartWorkout = async (workoutId: string) => {
         try {
@@ -40,6 +44,30 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
         } catch (error) {
             toast.error("Failed to delete workout");
         }
+    };
+
+    const handleTogglePublic = async (workout: any) => {
+        try {
+            await updateWorkout({
+                id: workout._id,
+                name: workout.name,
+                description: workout.description,
+                exercises: workout.exercises,
+                isPublic: !workout.isPublic,
+            });
+            toast.success(
+                workout.isPublic
+                    ? "Workout made private"
+                    : "Workout made public"
+            );
+        } catch (error) {
+            toast.error("Failed to update workout visibility");
+        }
+    };
+
+    const handleShareWorkout = (workout: any) => {
+        setSelectedWorkout(workout);
+        setShowShareModal(true);
     };
 
     const toggleExpanded = (workoutId: string) => {
@@ -97,9 +125,16 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                 {/* Main Workout Header */}
                                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
                                     <div className="flex-1">
-                                        <h3 className="text-lg sm:text-xl font-bold text-text-primary mb-1 font-montserrat">
-                                            {workout.name}
-                                        </h3>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h3 className="text-lg sm:text-xl font-bold text-text-primary font-montserrat">
+                                                {workout.name}
+                                            </h3>
+                                            {workout.isPublic ? (
+                                                <Globe className="w-4 h-4 text-accent-secondary" />
+                                            ) : (
+                                                <Lock className="w-4 h-4 text-text-secondary" />
+                                            )}
+                                        </div>
                                         {workout.description && (
                                             <p className="text-text-secondary text-sm font-source-sans">
                                                 {workout.description}
@@ -132,6 +167,33 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                             className="flex-1 sm:flex-none bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium text-sm font-source-sans"
                                         >
                                             Start
+                                        </button>
+                                        <button
+                                            onClick={() =>
+                                                handleShareWorkout(workout)
+                                            }
+                                            className="flex-1 sm:flex-none bg-accent-secondary text-white px-4 py-2 rounded-lg hover:bg-accent-secondary/90 transition-colors font-medium text-sm font-source-sans flex items-center justify-center gap-1"
+                                        >
+                                            <Share2 className="w-4 h-4" />
+                                            Share
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                void handleTogglePublic(
+                                                    workout
+                                                );
+                                            }}
+                                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg transition-colors font-medium text-sm font-source-sans flex items-center justify-center gap-1 ${
+                                                workout.isPublic
+                                                    ? "bg-text-secondary text-white hover:bg-text-secondary/90"
+                                                    : "bg-accent-secondary text-white hover:bg-accent-secondary/90"
+                                            }`}
+                                        >
+                                            {workout.isPublic ? (
+                                                <Lock className="w-4 h-4" />
+                                            ) : (
+                                                <Globe className="w-4 h-4" />
+                                            )}
                                         </button>
                                         <button
                                             onClick={() =>
@@ -240,6 +302,17 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                         );
                     })}
                 </div>
+            )}
+
+            {/* Share Workout Modal */}
+            {showShareModal && selectedWorkout && (
+                <ShareWorkoutModal
+                    workout={selectedWorkout}
+                    onClose={() => {
+                        setShowShareModal(false);
+                        setSelectedWorkout(null);
+                    }}
+                />
             )}
         </div>
     );

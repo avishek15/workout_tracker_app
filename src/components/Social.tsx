@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { FriendRequests } from "./FriendRequests";
 import { FriendsList } from "./FriendsList";
 import { AddFriend } from "./AddFriend";
+import { SharedWorkouts } from "./SharedWorkouts";
+import { FriendsWorkouts } from "./FriendsWorkouts";
 
-type Tab = "friends" | "requests" | "add";
+type Tab = "friends" | "requests" | "add" | "shared" | "friends-workouts";
 
 export function Social() {
     const [activeTab, setActiveTab] = useState<Tab>("friends");
@@ -12,6 +14,8 @@ export function Social() {
         { id: "friends" as const, label: "Friends" },
         { id: "requests" as const, label: "Requests" },
         { id: "add" as const, label: "Add Friend" },
+        { id: "shared" as const, label: "Shared Workouts" },
+        { id: "friends-workouts" as const, label: "Friends' Workouts" },
     ];
 
     return (
@@ -39,6 +43,8 @@ export function Social() {
                     {activeTab === "friends" && <FriendsList />}
                     {activeTab === "requests" && <FriendRequests />}
                     {activeTab === "add" && <AddFriend />}
+                    {activeTab === "shared" && <SharedWorkouts />}
+                    {activeTab === "friends-workouts" && <FriendsWorkouts />}
                 </div>
             </div>
         </div>

@@ -27,6 +27,9 @@ const applicationTables = {
         clientId: v.optional(v.string()),
         updatedAt: v.number(),
         deletedAt: v.optional(v.number()),
+
+        // social features
+        isPublic: v.optional(v.boolean()),
     })
         .index("by_user", ["userId"])
         .index("by_user_and_updatedAt", ["userId", "updatedAt"])
@@ -98,6 +101,22 @@ const applicationTables = {
         .index("by_user1", ["user1Id"])
         .index("by_user2", ["user2Id"])
         .index("by_user1_and_user2", ["user1Id", "user2Id"]),
+
+    // Shared workout plans
+    sharedWorkouts: defineTable({
+        originalWorkoutId: v.id("workouts"),
+        sharedByUserId: v.id("users"),
+        sharedWithUserId: v.id("users"),
+        sharedAt: v.number(),
+        status: v.union(
+            v.literal("pending"),
+            v.literal("accepted"),
+            v.literal("rejected")
+        ),
+    })
+        .index("by_shared_by", ["sharedByUserId"])
+        .index("by_shared_with", ["sharedWithUserId"])
+        .index("by_shared_with_and_status", ["sharedWithUserId", "status"]),
 };
 
 export default defineSchema({
