@@ -21,6 +21,7 @@ import type * as sessions from "../sessions.js";
 import type * as sets from "../sets.js";
 import type * as social from "../social.js";
 import type * as users from "../users.js";
+import type * as utils from "../utils.js";
 import type * as workouts from "../workouts.js";
 
 /**
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   sets: typeof sets;
   social: typeof social;
   users: typeof users;
+  utils: typeof utils;
   workouts: typeof workouts;
 }>;
 export declare const api: FilterApi<

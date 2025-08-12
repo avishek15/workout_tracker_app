@@ -36,6 +36,23 @@ export function ActiveSession() {
         );
     }
 
+    // Safety check for workout data
+    if (!activeSession.workout || !activeSession.workout.exercises) {
+        return (
+            <div className="text-center py-12">
+                <div className="w-16 h-16 bg-accent-primary rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Play className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-text-primary mb-2 font-montserrat">
+                    Loading Session Data
+                </h3>
+                <p className="text-text-secondary font-source-sans">
+                    Please wait while we load your workout session...
+                </p>
+            </div>
+        );
+    }
+
     const handleUpdateSet = async (
         setId: string,
         reps: number,
@@ -114,7 +131,7 @@ export function ActiveSession() {
 
     // Group sets by exercise
     const exerciseGroups =
-        activeSession.workout?.exercises.map((exercise) => ({
+        activeSession.workout?.exercises?.map((exercise) => ({
             ...exercise,
             sets: activeSession.sets.filter(
                 (set) => set.exerciseName === exercise.name

@@ -239,40 +239,60 @@ export const getFriends = query({
             ...friendships2.map((f) => f.user1Id),
         ];
 
+        if (friendIds.length === 0) {
+            return [];
+        }
+
+        // Batch fetch all friend data
         const friends = await Promise.all(
-            friendIds.map(async (friendId) => {
-                const user = await ctx.db.get(friendId);
+            friendIds.map((id) => ctx.db.get(id))
+        );
+
+        // Batch fetch all image URLs
+        const imageIds = friends
+            .filter((user) => user?.image && !user.image.startsWith("http"))
+            .map((user) => user!.image);
+
+        const imageUrls = await Promise.all(
+            imageIds.map(async (imageId) => {
+                try {
+                    return await ctx.storage.getUrl(imageId as any);
+                } catch (error) {
+                    console.error("Failed to get image URL:", error);
+                    return null;
+                }
+            })
+        );
+
+        // Create image URL map
+        const imageUrlMap = new Map();
+        imageIds.forEach((imageId, index) => {
+            imageUrlMap.set(imageId, imageUrls[index]);
+        });
+
+        // Combine data efficiently
+        const friendsWithData = friends
+            .filter((user) => user) // Filter out null users
+            .map((user) => {
                 let imageUrl: string | undefined;
 
-                // Handle image field - could be storage ID or URL
-                if (user?.image) {
-                    if (user.image.startsWith("http")) {
-                        // It's already a URL
-                        imageUrl = user.image;
+                if (user!.image) {
+                    if (user!.image.startsWith("http")) {
+                        imageUrl = user!.image;
                     } else {
-                        // It's a storage ID, convert to URL
-                        try {
-                            const url = await ctx.storage.getUrl(
-                                user.image as any
-                            );
-                            imageUrl = url || undefined;
-                        } catch (error) {
-                            console.error("Failed to get image URL:", error);
-                            imageUrl = undefined;
-                        }
+                        imageUrl = imageUrlMap.get(user!.image) || undefined;
                     }
                 }
 
                 return {
-                    userId: friendId,
-                    name: user?.name,
-                    email: user?.email,
+                    userId: user!._id,
+                    name: user!.name,
+                    email: user!.email,
                     image: imageUrl,
                 };
-            })
-        );
+            });
 
-        return friends;
+        return friendsWithData;
     },
 });
 
@@ -313,38 +333,53 @@ export const searchUsers = query({
             return nameMatch || emailMatch;
         });
 
-        // Convert storage IDs to URLs and return only the fields specified in the validator
-        const usersWithImageUrls = await Promise.all(
-            filteredUsers.slice(0, 10).map(async (user) => {
-                let imageUrl: string | undefined;
+        const limitedUsers = filteredUsers.slice(0, 10);
 
-                // Handle image field - could be storage ID or URL
-                if (user.image) {
-                    if (user.image.startsWith("http")) {
-                        // It's already a URL
-                        imageUrl = user.image;
-                    } else {
-                        // It's a storage ID, convert to URL
-                        try {
-                            const url = await ctx.storage.getUrl(
-                                user.image as any
-                            );
-                            imageUrl = url || undefined;
-                        } catch (error) {
-                            console.error("Failed to get image URL:", error);
-                            imageUrl = undefined;
-                        }
-                    }
+        if (limitedUsers.length === 0) {
+            return [];
+        }
+
+        // Batch fetch all image URLs
+        const imageIds = limitedUsers
+            .filter((user) => user.image && !user.image.startsWith("http"))
+            .map((user) => user.image!);
+
+        const imageUrls = await Promise.all(
+            imageIds.map(async (imageId) => {
+                try {
+                    return await ctx.storage.getUrl(imageId as any);
+                } catch (error) {
+                    console.error("Failed to get image URL:", error);
+                    return null;
                 }
-
-                return {
-                    _id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    image: imageUrl,
-                };
             })
         );
+
+        // Create image URL map
+        const imageUrlMap = new Map();
+        imageIds.forEach((imageId, index) => {
+            imageUrlMap.set(imageId, imageUrls[index]);
+        });
+
+        // Combine data efficiently
+        const usersWithImageUrls = limitedUsers.map((user) => {
+            let imageUrl: string | undefined;
+
+            if (user.image) {
+                if (user.image.startsWith("http")) {
+                    imageUrl = user.image;
+                } else {
+                    imageUrl = imageUrlMap.get(user.image) || undefined;
+                }
+            }
+
+            return {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                image: imageUrl,
+            };
+        });
 
         return usersWithImageUrls;
     },
@@ -459,26 +494,57 @@ export const getSharedWorkouts = query({
             )
             .collect();
 
-        const sharedWorkoutsWithData = await Promise.all(
-            sharedWorkouts.map(async (shared) => {
-                const workout = await ctx.db.get(shared.originalWorkoutId);
-                const sharedByUser = await ctx.db.get(shared.sharedByUserId);
+        if (sharedWorkouts.length === 0) {
+            return [];
+        }
 
-                return {
-                    _id: shared._id,
-                    originalWorkoutId: shared.originalWorkoutId,
-                    sharedByUserId: shared.sharedByUserId,
-                    sharedByUserName: sharedByUser?.name,
-                    workout: {
-                        name: workout?.name || "",
-                        description: workout?.description,
-                        exercises: workout?.exercises || [],
-                    },
-                    sharedAt: shared.sharedAt,
-                    status: shared.status,
-                };
-            })
-        );
+        // Batch fetch all workout and user data
+        const workoutIds = [
+            ...new Set(sharedWorkouts.map((s) => s.originalWorkoutId)),
+        ];
+        const userIds = [
+            ...new Set(sharedWorkouts.map((s) => s.sharedByUserId)),
+        ];
+
+        const [workouts, users] = await Promise.all([
+            Promise.all(workoutIds.map((id) => ctx.db.get(id))),
+            Promise.all(userIds.map((id) => ctx.db.get(id))),
+        ]);
+
+        // Create maps for quick lookup
+        const workoutMap = new Map();
+        workouts.forEach((workout) => {
+            if (workout) {
+                workoutMap.set(workout._id, workout);
+            }
+        });
+
+        const userMap = new Map();
+        users.forEach((user) => {
+            if (user) {
+                userMap.set(user._id, user);
+            }
+        });
+
+        // Combine data efficiently
+        const sharedWorkoutsWithData = sharedWorkouts.map((shared) => {
+            const workout = workoutMap.get(shared.originalWorkoutId);
+            const sharedByUser = userMap.get(shared.sharedByUserId);
+
+            return {
+                _id: shared._id,
+                originalWorkoutId: shared.originalWorkoutId,
+                sharedByUserId: shared.sharedByUserId,
+                sharedByUserName: sharedByUser?.name,
+                workout: {
+                    name: workout?.name || "",
+                    description: workout?.description,
+                    exercises: workout?.exercises || [],
+                },
+                sharedAt: shared.sharedAt,
+                status: shared.status,
+            };
+        });
 
         return sharedWorkoutsWithData;
     },
@@ -615,21 +681,35 @@ export const getFriendsPublicWorkouts = query({
             )
             .collect();
 
-        // Add user data to workouts and filter to only expected fields
-        const workoutsWithUserData = await Promise.all(
-            publicWorkouts.map(async (workout) => {
-                const user = await ctx.db.get(workout.userId);
-                return {
-                    _id: workout._id,
-                    name: workout.name,
-                    description: workout.description,
-                    exercises: workout.exercises,
-                    userId: workout.userId,
-                    userName: user?.name,
-                    userEmail: user?.email,
-                };
-            })
-        );
+        if (publicWorkouts.length === 0) {
+            return [];
+        }
+
+        // Batch fetch all user data
+        const userIds = [...new Set(publicWorkouts.map((w) => w.userId))];
+        const users = await Promise.all(userIds.map((id) => ctx.db.get(id)));
+
+        // Create user map for quick lookup
+        const userMap = new Map();
+        users.forEach((user) => {
+            if (user) {
+                userMap.set(user._id, user);
+            }
+        });
+
+        // Combine data efficiently
+        const workoutsWithUserData = publicWorkouts.map((workout) => {
+            const user = userMap.get(workout.userId);
+            return {
+                _id: workout._id,
+                name: workout.name,
+                description: workout.description,
+                exercises: workout.exercises,
+                userId: workout.userId,
+                userName: user?.name,
+                userEmail: user?.email,
+            };
+        });
 
         return workoutsWithUserData;
     },

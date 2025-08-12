@@ -18,11 +18,39 @@ export const getActive = query({
             )
             .collect();
 
-        return activeSessions[0] || null;
+        if (activeSessions.length === 0) {
+            return null;
+        }
+
+        const activeSession = activeSessions[0];
+
+        // Fetch workout data
+        const workout = await ctx.db.get(activeSession.workoutId);
+
+        // Fetch sets for the active session
+        const sets = await ctx.db
+            .query("sets")
+            .withIndex("by_session", (q) =>
+                q.eq("sessionId", activeSession._id)
+            )
+            .collect();
+
+        return {
+            ...activeSession,
+            sets,
+            workout: workout
+                ? {
+                      _id: workout._id,
+                      name: workout.name,
+                      description: workout.description,
+                      exercises: workout.exercises || [],
+                  }
+                : null,
+        };
     },
 });
 
-// Get all sessions for the current user
+// Get all sessions for the current user with optimized data fetching
 export const list = query({
     args: {},
     handler: async (ctx) => {
@@ -37,30 +65,55 @@ export const list = query({
             .order("desc")
             .collect();
 
-        // Fetch workout data and sets for each session
-        const sessionsWithData = await Promise.all(
-            sessions.map(async (session) => {
-                const workout = await ctx.db.get(session.workoutId);
-                const sets = await ctx.db
+        if (sessions.length === 0) {
+            return [];
+        }
+
+        // Batch fetch all workout data
+        const workoutIds = [...new Set(sessions.map((s) => s.workoutId))];
+        const workouts = await Promise.all(
+            workoutIds.map((id) => ctx.db.get(id))
+        );
+        const workoutMap = new Map(
+            workouts.filter((w) => w).map((w) => [w!._id, w])
+        );
+
+        // Batch fetch all sets for all sessions
+        const sessionIds = sessions.map((s) => s._id);
+        const allSets = await Promise.all(
+            sessionIds.map((sessionId) =>
+                ctx.db
                     .query("sets")
                     .withIndex("by_session", (q) =>
-                        q.eq("sessionId", session._id)
+                        q.eq("sessionId", sessionId)
                     )
-                    .collect();
-
-                return {
-                    ...session,
-                    workout: workout
-                        ? {
-                              _id: workout._id,
-                              name: workout.name,
-                              description: workout.description,
-                          }
-                        : null,
-                    sets,
-                };
-            })
+                    .collect()
+            )
         );
+
+        // Create sets map for quick lookup
+        const setsMap = new Map();
+        allSets.forEach((sets, index) => {
+            setsMap.set(sessionIds[index], sets);
+        });
+
+        // Combine data efficiently
+        const sessionsWithData = sessions.map((session) => {
+            const workout = workoutMap.get(session.workoutId);
+            const sets = setsMap.get(session._id) || [];
+
+            return {
+                ...session,
+                workout: workout
+                    ? {
+                          _id: workout._id,
+                          name: workout.name,
+                          description: workout.description,
+                      }
+                    : null,
+                sets,
+            };
+        });
 
         return sessionsWithData;
     },
@@ -111,6 +164,20 @@ export const start = mutation({
             throw new Error("Not authenticated");
         }
 
+        // Check for existing active session
+        const existingActiveSession = await ctx.db
+            .query("sessions")
+            .withIndex("by_user_and_status", (q) =>
+                q.eq("userId", userId).eq("status", "active")
+            )
+            .unique();
+
+        if (existingActiveSession) {
+            throw new Error(
+                "You already have an active workout session. Please complete or cancel it before starting a new one."
+            );
+        }
+
         const workout = await ctx.db.get(args.workoutId);
         if (!workout || workout.userId !== userId) {
             throw new Error("Workout not found or not authorized");
@@ -126,11 +193,8 @@ export const start = mutation({
 
         // Create initial sets for each exercise
         for (const exercise of workout.exercises) {
-            for (
-                let setNumber = 1;
-                setNumber <= exercise.targetSets;
-                setNumber++
-            ) {
+            const targetSets = exercise.targetSets || 3; // Default to 3 sets if not specified
+            for (let setNumber = 1; setNumber <= targetSets; setNumber++) {
                 await ctx.db.insert("sets", {
                     sessionId,
                     exerciseName: exercise.name,
