@@ -29,26 +29,22 @@ export const sendFriendRequest = mutation({
             throw new Error("Friend request already sent");
         }
 
-        // Check if already friends
-        const existingFriendship = await ctx.db
+        // Check if already friends (check both directions)
+        const friendship1 = await ctx.db
             .query("friendships")
             .withIndex("by_user1_and_user2", (q) =>
                 q.eq("user1Id", fromUserId).eq("user2Id", args.toUserId)
             )
             .unique();
 
-        if (!existingFriendship) {
-            const reverseFriendship = await ctx.db
-                .query("friendships")
-                .withIndex("by_user1_and_user2", (q) =>
-                    q.eq("user1Id", args.toUserId).eq("user2Id", fromUserId)
-                )
-                .unique();
+        const friendship2 = await ctx.db
+            .query("friendships")
+            .withIndex("by_user1_and_user2", (q) =>
+                q.eq("user1Id", args.toUserId).eq("user2Id", fromUserId)
+            )
+            .unique();
 
-            if (reverseFriendship) {
-                throw new Error("Already friends");
-            }
-        } else {
+        if (friendship1 || friendship2) {
             throw new Error("Already friends");
         }
 
@@ -317,13 +313,40 @@ export const searchUsers = query({
             return nameMatch || emailMatch;
         });
 
-        // Return only the fields specified in the validator
-        return filteredUsers.slice(0, 10).map((user) => ({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            image: user.image,
-        }));
+        // Convert storage IDs to URLs and return only the fields specified in the validator
+        const usersWithImageUrls = await Promise.all(
+            filteredUsers.slice(0, 10).map(async (user) => {
+                let imageUrl: string | undefined;
+
+                // Handle image field - could be storage ID or URL
+                if (user.image) {
+                    if (user.image.startsWith("http")) {
+                        // It's already a URL
+                        imageUrl = user.image;
+                    } else {
+                        // It's a storage ID, convert to URL
+                        try {
+                            const url = await ctx.storage.getUrl(
+                                user.image as any
+                            );
+                            imageUrl = url || undefined;
+                        } catch (error) {
+                            console.error("Failed to get image URL:", error);
+                            imageUrl = undefined;
+                        }
+                    }
+                }
+
+                return {
+                    _id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    image: imageUrl,
+                };
+            })
+        );
+
+        return usersWithImageUrls;
     },
 });
 
