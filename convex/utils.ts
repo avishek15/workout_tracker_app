@@ -82,6 +82,7 @@ export const calculateVolumeStats = internalQuery({
             v.object({
                 _id: v.id("sessions"),
                 endTime: v.optional(v.number()),
+                totalVolume: v.optional(v.number()),
             })
         ),
     },
@@ -130,29 +131,53 @@ export const calculateVolumeStats = internalQuery({
             )
         );
 
-        // Calculate volume for each session
+        // Calculate volume for each session using stored data
         for (let i = 0; i < args.sessions.length; i++) {
             const session = args.sessions[i];
             const sets = allSets[i];
 
-            let sessionVolume = 0;
+            // Use stored volume if available, otherwise calculate
+            let sessionVolume = session.totalVolume || 0;
 
-            for (const set of sets) {
-                if (set.completed && set.weight && set.reps) {
-                    const setVolume = set.weight * set.reps;
-                    sessionVolume += setVolume;
+            // If no stored volume, calculate it (for backward compatibility)
+            if (sessionVolume === 0) {
+                for (const set of sets) {
+                    if (set.completed && set.weight && set.reps) {
+                        const setVolume = set.weight * set.reps;
+                        sessionVolume += setVolume;
 
-                    // Track by exercise
-                    if (!exerciseVolumes[set.exerciseName]) {
-                        exerciseVolumes[set.exerciseName] = {
-                            volume: 0,
-                            sets: 0,
-                            totalWeight: 0,
-                        };
+                        // Track by exercise
+                        if (!exerciseVolumes[set.exerciseName]) {
+                            exerciseVolumes[set.exerciseName] = {
+                                volume: 0,
+                                sets: 0,
+                                totalWeight: 0,
+                            };
+                        }
+                        exerciseVolumes[set.exerciseName].volume += setVolume;
+                        exerciseVolumes[set.exerciseName].sets += 1;
+                        exerciseVolumes[set.exerciseName].totalWeight +=
+                            set.weight;
                     }
-                    exerciseVolumes[set.exerciseName].volume += setVolume;
-                    exerciseVolumes[set.exerciseName].sets += 1;
-                    exerciseVolumes[set.exerciseName].totalWeight += set.weight;
+                }
+            } else {
+                // Use stored volume, but still need to track exercise breakdown
+                for (const set of sets) {
+                    if (set.completed && set.weight && set.reps) {
+                        // Track by exercise
+                        if (!exerciseVolumes[set.exerciseName]) {
+                            exerciseVolumes[set.exerciseName] = {
+                                volume: 0,
+                                sets: 0,
+                                totalWeight: 0,
+                            };
+                        }
+                        exerciseVolumes[set.exerciseName].volume +=
+                            set.weight * set.reps;
+                        exerciseVolumes[set.exerciseName].sets += 1;
+                        exerciseVolumes[set.exerciseName].totalWeight +=
+                            set.weight;
+                    }
                 }
             }
 
@@ -343,5 +368,53 @@ export const getFavoriteExercises = internalQuery({
             .sort(([, a], [, b]) => b - a)
             .slice(0, 5)
             .map(([exercise]) => exercise);
+    },
+});
+
+// Calculate session summary (volume, sets, exercises)
+export const calculateSessionSummary = internalQuery({
+    args: {
+        sessionId: v.id("sessions"),
+    },
+    returns: v.object({
+        totalVolume: v.number(),
+        completedSets: v.number(),
+        totalSets: v.number(),
+        exerciseCount: v.number(),
+    }),
+    handler: async (ctx, args) => {
+        // Get all sets for this session
+        const sets = await ctx.db
+            .query("sets")
+            .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
+            .collect();
+
+        // Calculate denormalized fields
+        const completedSets = sets.filter((set) => set.completed).length;
+        const totalSets = sets.length;
+
+        // Get unique exercise names
+        const uniqueExercises = new Set(sets.map((set) => set.exerciseName));
+        const exerciseCount = uniqueExercises.size;
+
+        // Calculate total volume (convert to kg)
+        let totalVolume = 0;
+        for (const set of sets) {
+            if (set.completed && set.weight && set.reps) {
+                let weightInKg = set.weight;
+                // Convert lbs to kg if needed
+                if (set.weightUnit === "lbs") {
+                    weightInKg = set.weight * 0.453592;
+                }
+                totalVolume += weightInKg * set.reps;
+            }
+        }
+
+        return {
+            totalVolume,
+            completedSets,
+            totalSets,
+            exerciseCount,
+        };
     },
 });

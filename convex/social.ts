@@ -961,6 +961,7 @@ export const getUserVolumeStats = query({
             sessions: sessions.map((s) => ({
                 _id: s._id,
                 endTime: s.endTime,
+                totalVolume: s.totalVolume,
             })),
         });
         return result;
@@ -1042,6 +1043,7 @@ export const getMyVolumeStats = query({
             sessions: sessions.map((s) => ({
                 _id: s._id,
                 endTime: s.endTime,
+                totalVolume: s.totalVolume,
             })),
         });
         return result;

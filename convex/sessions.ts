@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 // Get active session for the current user
@@ -69,7 +70,7 @@ export const list = query({
             return [];
         }
 
-        // Batch fetch all workout data
+        // Batch fetch only workout data (no sets needed for list view)
         const workoutIds = [...new Set(sessions.map((s) => s.workoutId))];
         const workouts = await Promise.all(
             workoutIds.map((id) => ctx.db.get(id))
@@ -78,29 +79,9 @@ export const list = query({
             workouts.filter((w) => w).map((w) => [w!._id, w])
         );
 
-        // Batch fetch all sets for all sessions
-        const sessionIds = sessions.map((s) => s._id);
-        const allSets = await Promise.all(
-            sessionIds.map((sessionId) =>
-                ctx.db
-                    .query("sets")
-                    .withIndex("by_session", (q) =>
-                        q.eq("sessionId", sessionId)
-                    )
-                    .collect()
-            )
-        );
-
-        // Create sets map for quick lookup
-        const setsMap = new Map();
-        allSets.forEach((sets, index) => {
-            setsMap.set(sessionIds[index], sets);
-        });
-
-        // Combine data efficiently
+        // Return sessions with workout data only (no sets for better performance)
         const sessionsWithData = sessions.map((session) => {
             const workout = workoutMap.get(session.workoutId);
-            const sets = setsMap.get(session._id) || [];
 
             return {
                 ...session,
@@ -111,7 +92,8 @@ export const list = query({
                           description: workout.description,
                       }
                     : null,
-                sets,
+                // No sets data - use pre-computed stats from session document
+                // Sets will be loaded on-demand when session details are viewed
             };
         });
 
@@ -229,10 +211,22 @@ export const complete = mutation({
             throw new Error("Session not found or not authorized");
         }
 
+        // Calculate session summary (volume, sets, exercises)
+        const sessionSummary = await ctx.runQuery(
+            internal.utils.calculateSessionSummary,
+            {
+                sessionId: args.sessionId,
+            }
+        );
+
         await ctx.db.patch(args.sessionId, {
             status: "completed",
             endTime: Date.now(),
             notes: args.notes,
+            totalVolume: sessionSummary.totalVolume,
+            completedSets: sessionSummary.completedSets,
+            totalSets: sessionSummary.totalSets,
+            exerciseCount: sessionSummary.exerciseCount,
             updatedAt: Date.now(),
         });
     },
@@ -252,9 +246,21 @@ export const cancel = mutation({
             throw new Error("Session not found or not authorized");
         }
 
+        // Calculate session summary (volume, sets, exercises)
+        const sessionSummary = await ctx.runQuery(
+            internal.utils.calculateSessionSummary,
+            {
+                sessionId: args.sessionId,
+            }
+        );
+
         await ctx.db.patch(args.sessionId, {
             status: "cancelled",
             endTime: Date.now(),
+            totalVolume: sessionSummary.totalVolume,
+            completedSets: sessionSummary.completedSets,
+            totalSets: sessionSummary.totalSets,
+            exerciseCount: sessionSummary.exerciseCount,
             updatedAt: Date.now(),
         });
     },

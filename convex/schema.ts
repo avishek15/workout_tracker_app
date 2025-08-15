@@ -49,6 +49,10 @@ const applicationTables = {
             v.literal("cancelled")
         ),
         notes: v.optional(v.string()),
+        totalVolume: v.optional(v.number()), // Total volume in kg
+        completedSets: v.optional(v.number()), // Denormalized: count of completed sets
+        totalSets: v.optional(v.number()), // Denormalized: total sets in workout
+        exerciseCount: v.optional(v.number()), // Denormalized: number of exercises
 
         // offline/sync metadata
         clientId: v.optional(v.string()),
