@@ -1,66 +1,34 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-// Get all sessions for the current user
-export const list = query({
-    args: {},
-    handler: async (ctx) => {
-        const userId = await getAuthUserId(ctx);
-        if (!userId) {
-            throw new Error("Not authenticated");
-        }
-
-        const sessions = await ctx.db
-            .query("sessions")
-            .withIndex("by_user", (q) => q.eq("userId", userId))
-            .order("desc")
-            .collect();
-
-        // Get workout details and sets for each session
-        const sessionsWithWorkouts = await Promise.all(
-            sessions.map(async (session) => {
-                const workout = await ctx.db.get(session.workoutId);
-                const sets = await ctx.db
-                    .query("sets")
-                    .withIndex("by_session", (q) =>
-                        q.eq("sessionId", session._id)
-                    )
-                    .collect();
-
-                return {
-                    ...session,
-                    workout,
-                    sets,
-                };
-            })
-        );
-
-        return sessionsWithWorkouts;
-    },
-});
-
-// Get the current active session
+// Get active session for the current user
 export const getActive = query({
     args: {},
     handler: async (ctx) => {
         const userId = await getAuthUserId(ctx);
         if (!userId) {
-            throw new Error("Not authenticated");
+            return null;
         }
 
-        const activeSession = await ctx.db
+        const activeSessions = await ctx.db
             .query("sessions")
             .withIndex("by_user_and_status", (q) =>
                 q.eq("userId", userId).eq("status", "active")
             )
-            .first();
+            .collect();
 
-        if (!activeSession) {
+        if (activeSessions.length === 0) {
             return null;
         }
 
+        const activeSession = activeSessions[0];
+
+        // Fetch workout data
         const workout = await ctx.db.get(activeSession.workoutId);
+
+        // Fetch sets for the active session
         const sets = await ctx.db
             .query("sets")
             .withIndex("by_session", (q) =>
@@ -70,8 +38,101 @@ export const getActive = query({
 
         return {
             ...activeSession,
-            workout,
             sets,
+            workout: workout
+                ? {
+                      _id: workout._id,
+                      name: workout.name,
+                      description: workout.description,
+                      exercises: workout.exercises || [],
+                  }
+                : null,
+        };
+    },
+});
+
+// Get all sessions for the current user with optimized data fetching
+export const list = query({
+    args: {},
+    handler: async (ctx) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) {
+            return [];
+        }
+
+        const sessions = await ctx.db
+            .query("sessions")
+            .withIndex("by_user", (q) => q.eq("userId", userId))
+            .order("desc")
+            .collect();
+
+        if (sessions.length === 0) {
+            return [];
+        }
+
+        // Batch fetch only workout data (no sets needed for list view)
+        const workoutIds = [...new Set(sessions.map((s) => s.workoutId))];
+        const workouts = await Promise.all(
+            workoutIds.map((id) => ctx.db.get(id))
+        );
+        const workoutMap = new Map(
+            workouts.filter((w) => w).map((w) => [w!._id, w])
+        );
+
+        // Return sessions with workout data only (no sets for better performance)
+        const sessionsWithData = sessions.map((session) => {
+            const workout = workoutMap.get(session.workoutId);
+
+            return {
+                ...session,
+                workout: workout
+                    ? {
+                          _id: workout._id,
+                          name: workout.name,
+                          description: workout.description,
+                      }
+                    : null,
+                // No sets data - use pre-computed stats from session document
+                // Sets will be loaded on-demand when session details are viewed
+            };
+        });
+
+        return sessionsWithData;
+    },
+});
+
+// Get a specific session with its sets
+export const get = query({
+    args: { sessionId: v.id("sessions") },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) {
+            throw new Error("Not authenticated");
+        }
+
+        const session = await ctx.db.get(args.sessionId);
+        if (!session || session.userId !== userId) {
+            throw new Error("Session not found or not authorized");
+        }
+
+        const sets = await ctx.db
+            .query("sets")
+            .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
+            .collect();
+
+        // Fetch workout data
+        const workout = await ctx.db.get(session.workoutId);
+
+        return {
+            ...session,
+            sets,
+            workout: workout
+                ? {
+                      _id: workout._id,
+                      name: workout.name,
+                      description: workout.description,
+                  }
+                : null,
         };
     },
 });
@@ -85,16 +146,18 @@ export const start = mutation({
             throw new Error("Not authenticated");
         }
 
-        // Check if there's already an active session
-        const activeSession = await ctx.db
+        // Check for existing active session
+        const existingActiveSession = await ctx.db
             .query("sessions")
             .withIndex("by_user_and_status", (q) =>
                 q.eq("userId", userId).eq("status", "active")
             )
-            .first();
+            .unique();
 
-        if (activeSession) {
-            throw new Error("You already have an active workout session");
+        if (existingActiveSession) {
+            throw new Error(
+                "You already have an active workout session. Please complete or cancel it before starting a new one."
+            );
         }
 
         const workout = await ctx.db.get(args.workoutId);
@@ -107,22 +170,22 @@ export const start = mutation({
             userId,
             startTime: Date.now(),
             status: "active",
+            updatedAt: Date.now(),
         });
 
         // Create initial sets for each exercise
         for (const exercise of workout.exercises) {
-            for (
-                let setNumber = 1;
-                setNumber <= exercise.targetSets;
-                setNumber++
-            ) {
+            const targetSets = exercise.targetSets || 3; // Default to 3 sets if not specified
+            for (let setNumber = 1; setNumber <= targetSets; setNumber++) {
                 await ctx.db.insert("sets", {
                     sessionId,
                     exerciseName: exercise.name,
                     setNumber,
                     reps: exercise.targetReps || 0,
                     weight: exercise.targetWeight,
+                    weightUnit: "kg", // Default to kg for workout template weights
                     completed: false,
+                    updatedAt: Date.now(),
                 });
             }
         }
@@ -148,10 +211,23 @@ export const complete = mutation({
             throw new Error("Session not found or not authorized");
         }
 
+        // Calculate session summary (volume, sets, exercises)
+        const sessionSummary = await ctx.runQuery(
+            internal.utils.calculateSessionSummary,
+            {
+                sessionId: args.sessionId,
+            }
+        );
+
         await ctx.db.patch(args.sessionId, {
             status: "completed",
             endTime: Date.now(),
             notes: args.notes,
+            totalVolume: sessionSummary.totalVolume,
+            completedSets: sessionSummary.completedSets,
+            totalSets: sessionSummary.totalSets,
+            exerciseCount: sessionSummary.exerciseCount,
+            updatedAt: Date.now(),
         });
     },
 });
@@ -170,9 +246,22 @@ export const cancel = mutation({
             throw new Error("Session not found or not authorized");
         }
 
+        // Calculate session summary (volume, sets, exercises)
+        const sessionSummary = await ctx.runQuery(
+            internal.utils.calculateSessionSummary,
+            {
+                sessionId: args.sessionId,
+            }
+        );
+
         await ctx.db.patch(args.sessionId, {
             status: "cancelled",
             endTime: Date.now(),
+            totalVolume: sessionSummary.totalVolume,
+            completedSets: sessionSummary.completedSets,
+            totalSets: sessionSummary.totalSets,
+            exerciseCount: sessionSummary.exerciseCount,
+            updatedAt: Date.now(),
         });
     },
 });
@@ -201,7 +290,6 @@ export const deleteSession = mutation({
             await ctx.db.delete(set._id);
         }
 
-        // Delete the session
         await ctx.db.delete(args.sessionId);
     },
 });

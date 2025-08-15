@@ -3,12 +3,12 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { Play } from "lucide-react";
+import { WeightInput } from "./WeightInput";
 
 export function ActiveSession() {
     const activeSession = useQuery(api.sessions.getActive);
     const completeSession = useMutation(api.sessions.complete);
     const cancelSession = useMutation(api.sessions.cancel);
-    const updateSet = useMutation(api.sets.update);
     const completeSet = useMutation(api.sets.complete);
     const addSet = useMutation(api.sets.add);
     const removeSet = useMutation(api.sets.remove);
@@ -36,17 +36,22 @@ export function ActiveSession() {
         );
     }
 
-    const handleUpdateSet = async (
-        setId: string,
-        reps: number,
-        weight?: number
-    ) => {
-        try {
-            await updateSet({ setId: setId as any, reps, weight });
-        } catch (error) {
-            toast.error("Failed to update set");
-        }
-    };
+    // Safety check for workout data
+    if (!activeSession.workout || !activeSession.workout.exercises) {
+        return (
+            <div className="text-center py-12">
+                <div className="w-16 h-16 bg-accent-primary rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Play className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-text-primary mb-2 font-montserrat">
+                    Loading Session Data
+                </h3>
+                <p className="text-text-secondary font-source-sans">
+                    Please wait while we load your workout session...
+                </p>
+            </div>
+        );
+    }
 
     const handleCompleteSet = async (setId: string) => {
         try {
@@ -114,7 +119,7 @@ export function ActiveSession() {
 
     // Group sets by exercise
     const exerciseGroups =
-        activeSession.workout?.exercises.map((exercise) => ({
+        activeSession.workout?.exercises?.map((exercise) => ({
             ...exercise,
             sets: activeSession.sets.filter(
                 (set) => set.exerciseName === exercise.name
@@ -173,13 +178,6 @@ export function ActiveSession() {
                                         key={set._id}
                                         set={set}
                                         setNumber={setIndex + 1}
-                                        onUpdate={(setId, reps, weight) =>
-                                            void handleUpdateSet(
-                                                setId,
-                                                reps,
-                                                weight
-                                            )
-                                        }
                                         onComplete={(setId) =>
                                             void handleCompleteSet(setId)
                                         }
@@ -280,23 +278,29 @@ export function ActiveSession() {
 interface SetRowProps {
     set: any;
     setNumber: number;
-    onUpdate: (setId: string, reps: number, weight?: number) => void;
     onComplete: (setId: string) => void;
     onRemove: (setId: string) => void;
 }
 
-function SetRow({
-    set,
-    setNumber,
-    onUpdate,
-    onComplete,
-    onRemove,
-}: SetRowProps) {
-    const [reps, setReps] = useState(set.reps);
-    const [weight, setWeight] = useState(set.weight || "");
+function SetRow({ set, setNumber, onComplete, onRemove }: SetRowProps) {
+    const updateSet = useMutation(api.sets.update);
 
-    const handleUpdate = () => {
-        onUpdate(set._id, reps, weight ? parseFloat(weight) : undefined);
+    const handleWeightChange = (weight: number, unit: "kg" | "lbs") => {
+        void updateSet({
+            setId: set._id,
+            reps: set.reps,
+            weight: weight > 0 ? weight : undefined,
+            weightUnit: unit,
+        });
+    };
+
+    const handleRepsChange = (reps: number) => {
+        void updateSet({
+            setId: set._id,
+            reps,
+            weight: set.weight,
+            weightUnit: set.weightUnit,
+        });
     };
 
     return (
@@ -318,9 +322,10 @@ function SetRow({
                     <input
                         type="number"
                         min="0"
-                        value={reps}
-                        onChange={(e) => setReps(parseInt(e.target.value) || 0)}
-                        onBlur={handleUpdate}
+                        value={set.reps}
+                        onChange={(e) =>
+                            handleRepsChange(parseInt(e.target.value) || 0)
+                        }
                         className="w-20 sm:w-16 px-3 py-2 sm:py-1 border border-gray-300 rounded text-center"
                         disabled={set.completed}
                     />
@@ -328,18 +333,13 @@ function SetRow({
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <input
-                        type="number"
-                        min="0"
-                        step="0.5"
-                        value={weight}
-                        onChange={(e) => setWeight(e.target.value)}
-                        onBlur={handleUpdate}
-                        className="w-24 sm:w-20 px-3 py-2 sm:py-1 border border-gray-300 rounded text-center"
-                        placeholder="0"
+                    <WeightInput
+                        value={set.weight}
+                        unit={set.weightUnit || "kg"}
+                        onWeightChange={handleWeightChange}
                         disabled={set.completed}
+                        className="w-48 sm:w-44"
                     />
-                    <span className="text-sm text-gray-600">lbs</span>
                 </div>
             </div>
 

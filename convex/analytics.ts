@@ -164,15 +164,11 @@ export const getVolumeProgress = query({
         );
 
         const volumeData = sessionsWithSets
-            .filter((session) => session.sets.length > 0)
+            .filter((session) => session.totalVolume !== undefined)
             .map((session) => {
-                const totalVolume = session.sets.reduce((sum, set) => {
-                    return sum + (set.weight || 0) * set.reps;
-                }, 0);
-
                 return {
                     date: session.startTime,
-                    volume: totalVolume,
+                    volume: session.totalVolume || 0,
                     sessionId: session._id,
                 };
             })
@@ -332,15 +328,11 @@ export const getTotalVolume = query({
 
         // Calculate total volume per session
         const volumeData = sessionsWithSets
-            .filter((session) => session.sets.length > 0)
+            .filter((session) => session.totalVolume !== undefined)
             .map((session) => {
-                const totalVolume = session.sets.reduce((sum, set) => {
-                    return sum + (set.weight || 0) * set.reps;
-                }, 0);
-
                 return {
                     date: session.startTime,
-                    volume: totalVolume,
+                    volume: session.totalVolume || 0,
                     sessionId: session._id,
                     workoutName: session.workout?.name || "Unknown",
                 };

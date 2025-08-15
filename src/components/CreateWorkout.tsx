@@ -3,11 +3,14 @@ import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 
+import { WeightInput } from "./WeightInput";
+
 interface Exercise {
     name: string;
     targetSets: number;
     targetReps?: number;
     targetWeight?: number;
+    targetWeightUnit?: "kg" | "lbs";
     restTime?: number;
 }
 
@@ -18,12 +21,14 @@ interface CreateWorkoutProps {
 export function CreateWorkout({ onClose }: CreateWorkoutProps) {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
+    const [isPublic, setIsPublic] = useState(false);
     const [exercises, setExercises] = useState<Exercise[]>([]);
     const [currentExercise, setCurrentExercise] = useState<Exercise>({
         name: "",
         targetSets: 3,
         targetReps: 10,
         targetWeight: undefined,
+        targetWeightUnit: "kg",
         restTime: 60,
     });
 
@@ -41,6 +46,7 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
             targetSets: 3,
             targetReps: 10,
             targetWeight: undefined,
+            targetWeightUnit: "kg",
             restTime: 60,
         });
     };
@@ -67,6 +73,7 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                 name: name.trim(),
                 description: description.trim() || undefined,
                 exercises,
+                isPublic,
             });
             toast.success("Workout created successfully!");
             onClose();
@@ -117,6 +124,23 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                             rows={3}
                             placeholder="Optional description..."
                         />
+                    </div>
+
+                    {/* Public/Private Toggle */}
+                    <div className="flex items-center space-x-3">
+                        <input
+                            type="checkbox"
+                            id="isPublic"
+                            checked={isPublic}
+                            onChange={(e) => setIsPublic(e.target.checked)}
+                            className="w-4 h-4 text-accent-primary bg-background-primary border-accent-primary/30 rounded focus:ring-accent-primary focus:ring-2"
+                        />
+                        <label
+                            htmlFor="isPublic"
+                            className="text-sm font-medium text-text-secondary font-source-sans"
+                        >
+                            Make this workout public (visible to friends)
+                        </label>
                     </div>
                 </div>
 
@@ -180,92 +204,106 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                                             : undefined,
                                     })
                                 }
-                                className="w-full px-3 py-2 border border-accent-primary/30 rounded-lg focus:ring-2 focus:ring-accent-primary focus:border-transparent bg-background-primary text-text-primary placeholder-text-muted"
+                                className="w-full px-3 py-2 border border-accent-primary/30 rounded-lg focus:ring-2 focus:ring-accent-primary focus:border-transparent bg-background-primary text-text-primary"
                                 placeholder="Optional"
                             />
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium text-text-secondary mb-1 font-source-sans">
-                                Target Weight (lbs)
+                                Target Weight
+                            </label>
+                            <WeightInput
+                                value={currentExercise.targetWeight}
+                                unit={currentExercise.targetWeightUnit}
+                                onWeightChange={(weight, unit) =>
+                                    setCurrentExercise({
+                                        ...currentExercise,
+                                        targetWeight:
+                                            weight > 0 ? weight : undefined,
+                                        targetWeightUnit: unit,
+                                    })
+                                }
+                                placeholder="Optional"
+                                showUnitToggle={true}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-text-secondary mb-1 font-source-sans">
+                                Rest Time (sec)
                             </label>
                             <input
                                 type="number"
                                 min="0"
-                                step="0.5"
-                                value={currentExercise.targetWeight || ""}
+                                value={currentExercise.restTime || ""}
                                 onChange={(e) =>
                                     setCurrentExercise({
                                         ...currentExercise,
-                                        targetWeight: e.target.value
-                                            ? parseFloat(e.target.value)
+                                        restTime: e.target.value
+                                            ? parseInt(e.target.value)
                                             : undefined,
                                     })
                                 }
-                                className="w-full px-3 py-2 border border-accent-primary/30 rounded-lg focus:ring-2 focus:ring-accent-primary focus:border-transparent bg-background-primary text-text-primary placeholder-text-muted"
-                                placeholder="Optional"
+                                className="w-full px-3 py-2 border border-accent-primary/30 rounded-lg focus:ring-2 focus:ring-accent-primary focus:border-transparent bg-background-primary text-text-primary"
+                                placeholder="60"
                             />
                         </div>
-
-                        <div className="flex items-end">
-                            <button
-                                type="button"
-                                onClick={addExercise}
-                                className="w-full bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium font-source-sans"
-                            >
-                                Add Exercise
-                            </button>
-                        </div>
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={addExercise}
+                        className="w-full bg-accent-secondary text-white py-2 px-4 rounded-lg hover:bg-accent-secondary/90 transition-colors font-medium font-source-sans"
+                    >
+                        Add Exercise
+                    </button>
                 </div>
 
                 {/* Exercise List */}
                 {exercises.length > 0 && (
-                    <div className="space-y-3">
-                        <h4 className="font-medium text-text-secondary font-source-sans">
-                            Exercises ({exercises.length}):
-                        </h4>
-                        {exercises.map((exercise, index) => (
-                            <div
-                                key={index}
-                                className="bg-background-primary rounded-lg p-4 flex justify-between items-center border border-accent-primary/20"
-                            >
-                                <div>
-                                    <div className="font-medium text-text-primary font-source-sans">
-                                        {exercise.name}
-                                    </div>
-                                    <div className="text-sm text-text-secondary font-source-sans">
-                                        {exercise.targetSets} sets
-                                        {exercise.targetReps &&
-                                            ` × ${exercise.targetReps} reps`}
-                                        {exercise.targetWeight &&
-                                            ` @ ${exercise.targetWeight}lbs`}
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => removeExercise(index)}
-                                    className="text-danger/80 hover:text-danger font-bold text-lg"
+                    <div className="border-t pt-6">
+                        <h3 className="text-lg font-semibold text-text-primary mb-4 font-montserrat">
+                            Exercises ({exercises.length})
+                        </h3>
+                        <div className="space-y-2">
+                            {exercises.map((exercise, index) => (
+                                <div
+                                    key={index}
+                                    className="flex justify-between items-center bg-background-primary p-3 rounded-lg border border-accent-primary/20"
                                 >
-                                    ×
-                                </button>
-                            </div>
-                        ))}
+                                    <div>
+                                        <span className="font-medium text-text-primary font-source-sans">
+                                            {exercise.name}
+                                        </span>
+                                        <span className="text-sm text-text-secondary ml-2 font-source-sans">
+                                            {exercise.targetSets} sets
+                                            {exercise.targetReps &&
+                                                ` × ${exercise.targetReps} reps`}
+                                            {exercise.targetWeight &&
+                                                ` @ ${exercise.targetWeight} ${exercise.targetWeightUnit || "kg"}`}
+                                            {exercise.restTime &&
+                                                ` (${exercise.restTime}s rest)`}
+                                        </span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeExercise(index)}
+                                        className="text-danger hover:text-danger-hover font-medium font-source-sans"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
 
-                {/* Submit */}
-                <div className="flex gap-4 pt-6 border-t">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="flex-1 px-4 py-2 border border-accent-primary/30 text-text-primary rounded-lg hover:bg-background-secondary transition-colors font-medium font-source-sans"
-                    >
-                        Cancel
-                    </button>
+                {/* Submit Button */}
+                <div className="border-t pt-6">
                     <button
                         type="submit"
-                        className="flex-1 bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium font-source-sans"
+                        className="w-full bg-accent-primary text-white py-3 px-4 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium text-lg font-source-sans"
                     >
                         Create Workout
                     </button>

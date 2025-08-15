@@ -16,10 +16,13 @@ import type {
 import type * as analytics from "../analytics.js";
 import type * as auth from "../auth.js";
 import type * as http from "../http.js";
+import type * as migrations from "../migrations.js";
 import type * as router from "../router.js";
 import type * as sessions from "../sessions.js";
 import type * as sets from "../sets.js";
+import type * as social from "../social.js";
 import type * as users from "../users.js";
+import type * as utils from "../utils.js";
 import type * as workouts from "../workouts.js";
 
 /**
@@ -34,10 +37,13 @@ declare const fullApi: ApiFromModules<{
   analytics: typeof analytics;
   auth: typeof auth;
   http: typeof http;
+  migrations: typeof migrations;
   router: typeof router;
   sessions: typeof sessions;
   sets: typeof sets;
+  social: typeof social;
   users: typeof users;
+  utils: typeof utils;
   workouts: typeof workouts;
 }>;
 export declare const api: FilterApi<

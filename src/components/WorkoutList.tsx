@@ -2,7 +2,14 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Dumbbell } from "lucide-react";
+import { Dumbbell, Share2, Globe, Lock, Play, Trash2 } from "lucide-react";
+import { ShareWorkoutModal } from "./ShareWorkoutModal";
+import {
+    convertFromKgToUnit,
+    convertToKgFromUnit,
+    getDefaultWeightUnit,
+    roundWeight,
+} from "../lib/unitConversion";
 
 interface WorkoutListProps {
     onCreateNew: () => void;
@@ -12,7 +19,10 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
     const workouts = useQuery(api.workouts.list);
     const startSession = useMutation(api.sessions.start);
     const deleteWorkout = useMutation(api.workouts.remove);
+    const updateWorkout = useMutation(api.workouts.update);
     const [expandedWorkout, setExpandedWorkout] = useState<string | null>(null);
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [selectedWorkout, setSelectedWorkout] = useState<any>(null);
 
     const handleStartWorkout = async (workoutId: string) => {
         try {
@@ -40,6 +50,30 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
         } catch (error) {
             toast.error("Failed to delete workout");
         }
+    };
+
+    const handleTogglePublic = async (workout: any) => {
+        try {
+            await updateWorkout({
+                id: workout._id,
+                name: workout.name,
+                description: workout.description,
+                exercises: workout.exercises,
+                isPublic: !workout.isPublic,
+            });
+            toast.success(
+                workout.isPublic
+                    ? "Workout made private"
+                    : "Workout made public"
+            );
+        } catch (error) {
+            toast.error("Failed to update workout visibility");
+        }
+    };
+
+    const handleShareWorkout = (workout: any) => {
+        setSelectedWorkout(workout);
+        setShowShareModal(true);
     };
 
     const toggleExpanded = (workoutId: string) => {
@@ -97,9 +131,16 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                 {/* Main Workout Header */}
                                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
                                     <div className="flex-1">
-                                        <h3 className="text-lg sm:text-xl font-bold text-text-primary mb-1 font-montserrat">
-                                            {workout.name}
-                                        </h3>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h3 className="text-lg sm:text-xl font-bold text-text-primary font-montserrat">
+                                                {workout.name}
+                                            </h3>
+                                            {workout.isPublic ? (
+                                                <Globe className="w-4 h-4 text-accent-secondary" />
+                                            ) : (
+                                                <Lock className="w-4 h-4 text-text-secondary" />
+                                            )}
+                                        </div>
                                         {workout.description && (
                                             <p className="text-text-secondary text-sm font-source-sans">
                                                 {workout.description}
@@ -122,25 +163,61 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                     </div>
 
                                     {/* Action Buttons */}
-                                    <div className="flex gap-2 w-full sm:w-auto">
+                                    <div className="grid grid-cols-2 gap-2 mt-4">
                                         <button
                                             onClick={() =>
                                                 void handleStartWorkout(
                                                     workout._id
                                                 )
                                             }
-                                            className="flex-1 sm:flex-none bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium text-sm font-source-sans"
+                                            className="flex items-center justify-center gap-2 px-4 py-3 bg-accent-primary text-white rounded-lg hover:bg-accent-primary/90 transition-colors font-medium text-sm"
                                         >
+                                            <Play className="w-4 h-4" />
                                             Start
                                         </button>
+
+                                        <button
+                                            onClick={() =>
+                                                handleShareWorkout(workout)
+                                            }
+                                            className="flex items-center justify-center gap-2 px-4 py-3 bg-accent-secondary text-white rounded-lg hover:bg-accent-secondary/90 transition-colors text-sm"
+                                        >
+                                            <Share2 className="w-4 h-4" />
+                                            Share
+                                        </button>
+
+                                        <button
+                                            onClick={() =>
+                                                void handleTogglePublic(workout)
+                                            }
+                                            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-colors text-sm ${
+                                                workout.isPublic
+                                                    ? "bg-green-600 text-white hover:bg-green-700"
+                                                    : "bg-gray-600 text-white hover:bg-gray-700"
+                                            }`}
+                                        >
+                                            {workout.isPublic ? (
+                                                <>
+                                                    <Globe className="w-4 h-4" />
+                                                    Public
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Lock className="w-4 h-4" />
+                                                    Private
+                                                </>
+                                            )}
+                                        </button>
+
                                         <button
                                             onClick={() =>
                                                 void handleDeleteWorkout(
                                                     workout._id
                                                 )
                                             }
-                                            className="flex-1 sm:flex-none bg-danger text-white px-4 py-2 rounded-lg hover:bg-danger-hover transition-colors font-medium text-sm font-source-sans"
+                                            className="flex items-center justify-center gap-2 px-4 py-3 bg-danger text-white rounded-lg hover:bg-danger-hover transition-colors text-sm"
                                         >
+                                            <Trash2 className="w-4 h-4" />
                                             Delete
                                         </button>
                                     </div>
@@ -227,7 +304,32 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                                                                 {exercise.targetReps &&
                                                                     ` × ${exercise.targetReps} reps`}
                                                                 {exercise.targetWeight &&
-                                                                    ` @ ${exercise.targetWeight}lbs`}
+                                                                    (() => {
+                                                                        const preferredUnit =
+                                                                            getDefaultWeightUnit();
+                                                                        const storedUnit =
+                                                                            exercise.targetWeightUnit ||
+                                                                            "kg";
+
+                                                                        if (
+                                                                            storedUnit ===
+                                                                            preferredUnit
+                                                                        ) {
+                                                                            return ` @ ${roundWeight(exercise.targetWeight, preferredUnit)} ${preferredUnit}`;
+                                                                        } else {
+                                                                            const convertedWeight =
+                                                                                convertToKgFromUnit(
+                                                                                    exercise.targetWeight,
+                                                                                    storedUnit
+                                                                                );
+                                                                            const finalWeight =
+                                                                                convertFromKgToUnit(
+                                                                                    convertedWeight,
+                                                                                    preferredUnit
+                                                                                );
+                                                                            return ` @ ${roundWeight(finalWeight, preferredUnit)} ${preferredUnit}`;
+                                                                        }
+                                                                    })()}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -240,6 +342,17 @@ export function WorkoutList({ onCreateNew }: WorkoutListProps) {
                         );
                     })}
                 </div>
+            )}
+
+            {/* Share Workout Modal */}
+            {showShareModal && selectedWorkout && (
+                <ShareWorkoutModal
+                    workout={selectedWorkout}
+                    onClose={() => {
+                        setShowShareModal(false);
+                        setSelectedWorkout(null);
+                    }}
+                />
             )}
         </div>
     );

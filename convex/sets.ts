@@ -1,13 +1,35 @@
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-// Update a set's reps and weight
+// Get all sets for a session
+export const list = query({
+    args: { sessionId: v.id("sessions") },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) {
+            throw new Error("Not authenticated");
+        }
+
+        const session = await ctx.db.get(args.sessionId);
+        if (!session || session.userId !== userId) {
+            throw new Error("Session not found or not authorized");
+        }
+
+        return await ctx.db
+            .query("sets")
+            .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
+            .collect();
+    },
+});
+
+// Update a set
 export const update = mutation({
     args: {
         setId: v.id("sets"),
         reps: v.number(),
         weight: v.optional(v.number()),
+        weightUnit: v.optional(v.union(v.literal("kg"), v.literal("lbs"))),
     },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
@@ -28,6 +50,8 @@ export const update = mutation({
         await ctx.db.patch(args.setId, {
             reps: args.reps,
             weight: args.weight,
+            weightUnit: args.weightUnit,
+            updatedAt: Date.now(),
         });
     },
 });
@@ -54,6 +78,40 @@ export const complete = mutation({
         await ctx.db.patch(args.setId, {
             completed: true,
             completedAt: Date.now(),
+            updatedAt: Date.now(),
+        });
+    },
+});
+
+// Complete a set with weight and unit information
+export const completeWithWeight = mutation({
+    args: {
+        setId: v.id("sets"),
+        weight: v.optional(v.number()),
+        weightUnit: v.optional(v.union(v.literal("kg"), v.literal("lbs"))),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) {
+            throw new Error("Not authenticated");
+        }
+
+        const set = await ctx.db.get(args.setId);
+        if (!set) {
+            throw new Error("Set not found");
+        }
+
+        const session = await ctx.db.get(set.sessionId);
+        if (!session || session.userId !== userId) {
+            throw new Error("Not authorized");
+        }
+
+        await ctx.db.patch(args.setId, {
+            weight: args.weight,
+            weightUnit: args.weightUnit,
+            completed: true,
+            completedAt: Date.now(),
+            updatedAt: Date.now(),
         });
     },
 });
@@ -65,6 +123,7 @@ export const add = mutation({
         exerciseName: v.string(),
         reps: v.number(),
         weight: v.optional(v.number()),
+        weightUnit: v.optional(v.union(v.literal("kg"), v.literal("lbs"))),
     },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
@@ -98,7 +157,9 @@ export const add = mutation({
             setNumber: maxSetNumber + 1,
             reps: args.reps,
             weight: args.weight,
+            weightUnit: args.weightUnit,
             completed: false,
+            updatedAt: Date.now(),
         });
     },
 });
