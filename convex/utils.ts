@@ -397,16 +397,52 @@ export const calculateSessionSummary = internalQuery({
         const uniqueExercises = new Set(sets.map((set) => set.exerciseName));
         const exerciseCount = uniqueExercises.size;
 
-        // Calculate total volume (convert to kg)
+        // Get bodyweight from session or fallback
+        let bodyWeight = 80; // Default fallback in kg
+        let bodyWeightUnit: "kg" | "lbs" = "kg";
+
+        // Try to get bodyweight from current session
+        const bodyWeights = await ctx.db
+            .query("bodyWeights")
+            .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
+            .order("desc")
+            .collect();
+
+        if (bodyWeights.length > 0) {
+            const latestEntry = bodyWeights[0];
+            bodyWeight = latestEntry.weight;
+            bodyWeightUnit = latestEntry.weightUnit;
+        }
+
+        // Calculate total volume with bodyweight logic
         let totalVolume = 0;
         for (const set of sets) {
-            if (set.completed && set.weight && set.reps) {
-                let weightInKg = set.weight;
-                // Convert lbs to kg if needed
-                if (set.weightUnit === "lbs") {
-                    weightInKg = set.weight * 0.453592;
+            if (set.completed && set.reps) {
+                let setVolume = 0;
+
+                if (set.isBodyweight) {
+                    // Bodyweight exercise: reps * max(bodyWeight - weight, 0)
+                    const effectiveWeight = Math.max(
+                        bodyWeight - (set.weight || 0),
+                        0
+                    );
+                    setVolume = set.reps * effectiveWeight;
+                } else {
+                    // Regular exercise: reps * weight
+                    setVolume = set.reps * (set.weight || 0);
                 }
-                totalVolume += weightInKg * set.reps;
+
+                // Convert to kg for consistent total
+                if (set.weightUnit === "lbs" && bodyWeightUnit === "kg") {
+                    setVolume = setVolume * 0.453592; // Convert lbs to kg
+                } else if (
+                    set.weightUnit === "kg" &&
+                    bodyWeightUnit === "lbs"
+                ) {
+                    setVolume = setVolume * 2.20462; // Convert kg to lbs
+                }
+
+                totalVolume += setVolume;
             }
         }
 

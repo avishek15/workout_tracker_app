@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { Play } from "lucide-react";
 import { WeightInput } from "./WeightInput";
+import { Switch } from "./ui/switch";
 
 export function ActiveSession() {
     const activeSession = useQuery(api.sessions.getActive);
@@ -12,9 +13,27 @@ export function ActiveSession() {
     const completeSet = useMutation(api.sets.complete);
     const addSet = useMutation(api.sets.add);
     const removeSet = useMutation(api.sets.remove);
+    const updateSet = useMutation(api.sets.update);
+    const addBodyWeight = useMutation(api.bodyWeights.add);
+    const removeBodyWeight = useMutation(api.bodyWeights.remove);
 
     const [notes, setNotes] = useState("");
     const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+    const [bodyWeight, setBodyWeight] = useState<number | undefined>();
+    const [bodyWeightUnit, setBodyWeightUnit] = useState<"kg" | "lbs">("kg");
+    const [optimisticBodyweightToggles, setOptimisticBodyweightToggles] =
+        useState<Record<string, boolean>>({});
+
+    // Get body weight history from database
+    const bodyWeightHistory = useQuery(
+        api.bodyWeights.listBySession,
+        activeSession ? { sessionId: activeSession._id } : "skip"
+    );
+
+    // Clear optimistic state when session changes
+    useEffect(() => {
+        setOptimisticBodyweightToggles({});
+    }, [activeSession?._id]);
 
     if (activeSession === undefined) {
         return <div className="text-center py-8">Loading...</div>;
@@ -62,17 +81,42 @@ export function ActiveSession() {
         }
     };
 
-    const handleAddSet = async (exerciseName: string) => {
+    const handleExerciseBodyweightToggle = async (
+        exerciseName: string,
+        isBodyweight: boolean
+    ) => {
+        // Optimistic update
+        setOptimisticBodyweightToggles((prev) => ({
+            ...prev,
+            [exerciseName]: isBodyweight,
+        }));
+
         try {
-            await addSet({
-                sessionId: activeSession._id as any,
-                exerciseName,
-                reps: 10,
-                weight: undefined,
-            });
-            toast.success("Set added!");
+            // Update all sets for this exercise
+            const exerciseSets = activeSession.sets.filter(
+                (set) => set.exerciseName === exerciseName
+            );
+
+            for (const set of exerciseSets) {
+                await updateSet({
+                    setId: set._id,
+                    reps: set.reps,
+                    weight: set.weight || 0,
+                    weightUnit: set.weightUnit,
+                    isBodyweight,
+                });
+            }
+
+            toast.success(
+                `All ${exerciseName} sets updated to ${isBodyweight ? "bodyweight" : "regular"} exercise`
+            );
         } catch (error) {
-            toast.error("Failed to add set");
+            // Revert optimistic update on error
+            setOptimisticBodyweightToggles((prev) => ({
+                ...prev,
+                [exerciseName]: !isBodyweight,
+            }));
+            toast.error("Failed to update exercise type");
         }
     };
 
@@ -83,6 +127,32 @@ export function ActiveSession() {
             toast.success("Set removed");
         } catch (error) {
             toast.error("Failed to remove set");
+        }
+    };
+
+    const handleBodyWeightChange = (weight: number, unit: "kg" | "lbs") => {
+        setBodyWeight(weight);
+        setBodyWeightUnit(unit);
+    };
+
+    const handleSaveBodyWeight = async () => {
+        if (!activeSession) return;
+
+        if (!bodyWeight || bodyWeight <= 0) {
+            toast.error("Please enter a valid weight");
+            return;
+        }
+
+        try {
+            await addBodyWeight({
+                sessionId: activeSession._id,
+                weight: bodyWeight,
+                weightUnit: bodyWeightUnit,
+            });
+            setBodyWeight(undefined); // Clear the input
+            toast.success(`Weight saved: ${bodyWeight} ${bodyWeightUnit}`);
+        } catch (error) {
+            toast.error("Failed to save weight");
         }
     };
 
@@ -124,7 +194,35 @@ export function ActiveSession() {
             sets: activeSession.sets.filter(
                 (set) => set.exerciseName === exercise.name
             ),
+            // Use optimistic state if available, otherwise fall back to database state
+            isBodyweight: optimisticBodyweightToggles.hasOwnProperty(
+                exercise.name
+            )
+                ? optimisticBodyweightToggles[exercise.name]
+                : exercise.isBodyweight || false,
         })) || [];
+
+    // Updated handleAddSet to use exercise bodyweight setting
+    const handleAddSet = async (exerciseName: string) => {
+        try {
+            // Find the exercise to get its bodyweight setting
+            const exercise = exerciseGroups.find(
+                (ex) => ex.name === exerciseName
+            );
+            const isBodyweight = exercise?.isBodyweight || false;
+
+            await addSet({
+                sessionId: activeSession._id as any,
+                exerciseName,
+                reps: 10,
+                weight: undefined,
+                isBodyweight,
+            });
+            toast.success("Set added!");
+        } catch (error) {
+            toast.error("Failed to add set");
+        }
+    };
 
     const completedSets = activeSession.sets.filter(
         (set) => set.completed
@@ -161,15 +259,96 @@ export function ActiveSession() {
                 </div>
             </div>
 
+            {/* Optional Body Weight Section */}
+            <div className="border border-gray-200 rounded-lg p-4 sm:p-6 bg-gray-50">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                    <div>
+                        <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                            Body Weight (Optional)
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                            Log your weight at the start of your workout
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                        <WeightInput
+                            value={bodyWeight}
+                            unit={bodyWeightUnit}
+                            onWeightChange={handleBodyWeightChange}
+                            placeholder="Enter weight"
+                            className="w-full sm:w-64"
+                        />
+                    </div>
+                    <button
+                        onClick={() => void handleSaveBodyWeight()}
+                        className="bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium"
+                    >
+                        Save Weight
+                    </button>
+                </div>
+
+                {bodyWeightHistory && bodyWeightHistory.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">
+                            Today's Weight Log
+                        </h4>
+                        <div className="space-y-2">
+                            {bodyWeightHistory?.map((entry) => (
+                                <div
+                                    key={entry._id}
+                                    className="flex justify-between items-center text-sm"
+                                >
+                                    <span className="text-gray-600">
+                                        {new Date(
+                                            entry.measuredAt
+                                        ).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })}
+                                    </span>
+                                    <span className="font-medium">
+                                        {entry.weight} {entry.weightUnit}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
             {/* Exercises */}
             <div className="space-y-6">
                 {exerciseGroups.map((exercise, exerciseIndex) => (
                     <div key={exerciseIndex}>
                         <div className="border rounded-lg p-4 sm:p-6">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-                                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 capitalize">
-                                    {exercise.name}
-                                </h3>
+                                <div className="flex items-center gap-4">
+                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 capitalize">
+                                        {exercise.name}
+                                    </h3>
+
+                                    {/* Exercise-level Bodyweight Toggle */}
+                                    <div className="flex items-center gap-3">
+                                        <Switch
+                                            checked={
+                                                exercise.isBodyweight || false
+                                            }
+                                            onCheckedChange={(checked) =>
+                                                void handleExerciseBodyweightToggle(
+                                                    exercise.name,
+                                                    checked
+                                                )
+                                            }
+                                            className="scale-125 data-[state=checked]:bg-secondary data-[state=unchecked]:bg-background-secondary [&>span]:bg-accent-primary [&>span]:border-2 [&>span]:border-black/20 shadow-md hover:shadow-lg transition-shadow border-2 border-accent-primary/30"
+                                        />
+                                        <span className="text-sm font-semibold text-text-primary">
+                                            Bodyweight Exercise
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="space-y-3">
@@ -319,6 +498,7 @@ function SetRow({ set, setNumber, onComplete, onRemove }: SetRowProps) {
             reps: repsValue,
             weight: localWeight || 0, // Never save undefined, always 0
             weightUnit: localWeightUnit,
+            isBodyweight: set.isBodyweight, // Use the set's current bodyweight setting
         });
         onComplete(set._id);
     };
