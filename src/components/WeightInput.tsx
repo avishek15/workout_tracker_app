@@ -45,17 +45,29 @@ export function WeightInput({
         const newValue = e.target.value;
         setInputValue(newValue);
 
-        // Save immediately
-        const numValue = parseFloat(newValue) || 0;
-        onWeightChange(numValue, currentUnit);
+        // Allow empty string for better UX with backspace
+        if (newValue === "") {
+            onWeightChange(0, currentUnit);
+        } else {
+            const numValue = parseFloat(newValue);
+            if (!isNaN(numValue)) {
+                onWeightChange(numValue, currentUnit);
+            }
+        }
     };
 
     const handleUnitChange = (newUnit: WeightUnit) => {
         setCurrentUnit(newUnit);
 
-        // Save with new unit
-        const numValue = parseFloat(inputValue) || 0;
-        onWeightChange(numValue, newUnit);
+        // Update with new unit - allow empty string for better UX with backspace
+        if (inputValue === "") {
+            onWeightChange(0, newUnit);
+        } else {
+            const numValue = parseFloat(inputValue);
+            if (!isNaN(numValue)) {
+                onWeightChange(numValue, newUnit);
+            }
+        }
     };
 
     return (
@@ -65,11 +77,17 @@ export function WeightInput({
                     type="number"
                     value={inputValue}
                     onChange={handleInputChange}
+                    onBlur={() => {
+                        // When input loses focus, show 0 if empty
+                        if (inputValue === "") {
+                            setInputValue("0");
+                        }
+                    }}
                     placeholder={placeholder}
                     disabled={disabled}
                     className={cn(
-                        "w-full px-3 py-2 border rounded-md bg-background-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary transition-colors",
-                        "border-accent-primary/20",
+                        "w-full px-3 py-2 border rounded-md bg-white text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary transition-colors",
+                        "border-gray-300",
                         disabled && "opacity-50 cursor-not-allowed"
                     )}
                     min="0"
