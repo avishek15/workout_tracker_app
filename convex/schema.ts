@@ -22,6 +22,7 @@ const applicationTables = {
                 targetWeightUnit: v.optional(
                     v.union(v.literal("kg"), v.literal("lbs"))
                 ),
+                isBodyweight: v.optional(v.boolean()),
                 restTime: v.optional(v.number()),
             })
         ),
@@ -71,6 +72,7 @@ const applicationTables = {
         reps: v.number(),
         weight: v.optional(v.number()),
         weightUnit: v.optional(v.union(v.literal("kg"), v.literal("lbs"))),
+        isBodyweight: v.optional(v.boolean()),
         completed: v.boolean(),
         completedAt: v.optional(v.number()),
 
@@ -125,6 +127,24 @@ const applicationTables = {
         .index("by_shared_by", ["sharedByUserId"])
         .index("by_shared_with", ["sharedWithUserId"])
         .index("by_shared_with_and_status", ["sharedWithUserId", "status"]),
+
+    // Body weight measurements
+    bodyWeights: defineTable({
+        sessionId: v.id("sessions"),
+        userId: v.id("users"),
+        weight: v.number(),
+        weightUnit: v.union(v.literal("kg"), v.literal("lbs")),
+        measuredAt: v.number(),
+
+        // offline/sync metadata
+        clientId: v.optional(v.string()),
+        updatedAt: v.number(),
+        deletedAt: v.optional(v.number()),
+    })
+        .index("by_session", ["sessionId"])
+        .index("by_user", ["userId"])
+        .index("by_user_and_date", ["userId", "measuredAt"])
+        .index("by_clientId", ["clientId"]),
 };
 
 export default defineSchema({

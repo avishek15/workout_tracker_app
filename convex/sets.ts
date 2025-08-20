@@ -30,6 +30,7 @@ export const update = mutation({
         reps: v.number(),
         weight: v.optional(v.number()),
         weightUnit: v.optional(v.union(v.literal("kg"), v.literal("lbs"))),
+        isBodyweight: v.optional(v.boolean()),
     },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
@@ -51,6 +52,7 @@ export const update = mutation({
             reps: args.reps,
             weight: args.weight,
             weightUnit: args.weightUnit,
+            isBodyweight: args.isBodyweight,
             updatedAt: Date.now(),
         });
     },
@@ -124,6 +126,7 @@ export const add = mutation({
         reps: v.number(),
         weight: v.optional(v.number()),
         weightUnit: v.optional(v.union(v.literal("kg"), v.literal("lbs"))),
+        isBodyweight: v.optional(v.boolean()),
     },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
@@ -158,6 +161,7 @@ export const add = mutation({
             reps: args.reps,
             weight: args.weight,
             weightUnit: args.weightUnit,
+            isBodyweight: args.isBodyweight,
             completed: false,
             updatedAt: Date.now(),
         });
