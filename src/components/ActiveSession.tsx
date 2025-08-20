@@ -216,6 +216,7 @@ export function ActiveSession() {
                 exerciseName,
                 reps: 10,
                 weight: undefined,
+                effectiveWeight: undefined, // Will be calculated later
                 isBodyweight,
             });
             toast.success("Set added!");
@@ -498,6 +499,7 @@ function SetRow({ set, setNumber, onComplete, onRemove }: SetRowProps) {
             reps: repsValue,
             weight: localWeight || 0, // Never save undefined, always 0
             weightUnit: localWeightUnit,
+            effectiveWeight: localWeight || 0, // Initially same as weight, will be calculated later
             isBodyweight: set.isBodyweight, // Use the set's current bodyweight setting
         });
         onComplete(set._id);

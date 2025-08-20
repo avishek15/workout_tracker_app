@@ -72,6 +72,7 @@ const applicationTables = {
         reps: v.number(),
         weight: v.optional(v.number()),
         weightUnit: v.optional(v.union(v.literal("kg"), v.literal("lbs"))),
+        effectiveWeight: v.optional(v.number()),
         isBodyweight: v.optional(v.boolean()),
         completed: v.boolean(),
         completedAt: v.optional(v.number()),
