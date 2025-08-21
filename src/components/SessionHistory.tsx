@@ -561,7 +561,7 @@ function SessionDetailsModal({
                             </div>
                         )}
 
-                        {/* Volume Breakdown */}
+                        {/* Volume Breakdown (simplified) */}
                         <div className="mb-6 p-4 bg-blue-50 rounded-lg">
                             <div className="text-sm font-medium text-gray-700 mb-3">
                                 Volume Breakdown:
@@ -572,8 +572,7 @@ function SessionDetailsModal({
                                         const exerciseSets = sets as any[];
 
                                         let exerciseVolume = 0;
-                                        let bodyweightVolume = 0;
-                                        let regularVolume = 0;
+                                        let hadBodyweight = false;
 
                                         exerciseSets.forEach((set: any) => {
                                             if (
@@ -585,12 +584,8 @@ function SessionDetailsModal({
                                                     set.reps *
                                                     set.effectiveWeight;
                                                 exerciseVolume += setVolume;
-
                                                 if (set.isBodyweight) {
-                                                    bodyweightVolume +=
-                                                        setVolume;
-                                                } else {
-                                                    regularVolume += setVolume;
+                                                    hadBodyweight = true;
                                                 }
                                             }
                                         });
@@ -610,42 +605,20 @@ function SessionDetailsModal({
                                                     key={exerciseName}
                                                     className="flex justify-between items-center text-sm"
                                                 >
-                                                    <span className="text-gray-600">
+                                                    <span className="text-gray-600 flex items-center gap-2">
                                                         {exerciseName}
+                                                        {hadBodyweight && (
+                                                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-accent-primary/10 text-accent-primary">
+                                                                Bodyweight
+                                                            </span>
+                                                        )}
                                                     </span>
-                                                    <div className="flex items-center gap-2">
-                                                        {bodyweightVolume >
-                                                            0 && (
-                                                            <span className="text-blue-600 text-xs">
-                                                                {convertWeight(
-                                                                    bodyweightVolume,
-                                                                    "kg",
-                                                                    userUnit
-                                                                ).toFixed(
-                                                                    1
-                                                                )}{" "}
-                                                                {userUnit} (BW)
-                                                            </span>
-                                                        )}
-                                                        {regularVolume > 0 && (
-                                                            <span className="text-gray-600 text-xs">
-                                                                {convertWeight(
-                                                                    regularVolume,
-                                                                    "kg",
-                                                                    userUnit
-                                                                ).toFixed(
-                                                                    1
-                                                                )}{" "}
-                                                                {userUnit} (Reg)
-                                                            </span>
-                                                        )}
-                                                        <span className="font-medium text-gray-700">
-                                                            {convertedVolume.toFixed(
-                                                                1
-                                                            )}{" "}
-                                                            {userUnit} total
-                                                        </span>
-                                                    </div>
+                                                    <span className="font-medium text-gray-700">
+                                                        {convertedVolume.toFixed(
+                                                            1
+                                                        )}{" "}
+                                                        {userUnit}
+                                                    </span>
                                                 </div>
                                             );
                                         }

@@ -49,24 +49,31 @@ export function ExerciseGroup({
         <div className="space-y-4">
             {/* Exercise Header */}
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 shadow-sm">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                <div
+                    className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 cursor-pointer select-none"
+                    role="button"
+                    aria-expanded={isExpanded}
+                    onClick={onToggleExpansion}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            onToggleExpansion();
+                        }
+                    }}
+                    tabIndex={0}
+                >
                     <div className="flex items-center gap-3 flex-1">
-                        {/* Collapse/Expand Toggle */}
-                        <button
-                            onClick={onToggleExpansion}
-                            className="flex items-center justify-center p-1 hover:bg-gray-100 rounded transition-colors"
-                            aria-label={
-                                isExpanded
-                                    ? "Collapse exercise"
-                                    : "Expand exercise"
-                            }
+                        {/* Collapse/Expand Indicator */}
+                        <div
+                            className="flex items-center justify-center p-1 rounded"
+                            aria-hidden
                         >
                             {isExpanded ? (
                                 <ChevronDown className="w-5 h-5 text-gray-600" />
                             ) : (
                                 <ChevronRight className="w-5 h-5 text-gray-600" />
                             )}
-                        </button>
+                        </div>
 
                         <div className="flex-1">
                             <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
@@ -150,7 +157,11 @@ export function ExerciseGroup({
 
                     {/* Bodyweight Toggle - Only show when expanded */}
                     {isExpanded && (
-                        <div className="flex items-center gap-2 sm:gap-3">
+                        <div
+                            className="flex items-center gap-2 sm:gap-3"
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                        >
                             <Switch
                                 checked={isBodyweight}
                                 onCheckedChange={(checked) =>

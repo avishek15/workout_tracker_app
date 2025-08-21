@@ -104,7 +104,7 @@ export function SetRow({ set, setNumber, onComplete, onRemove }: SetRowProps) {
                                 setRepsInputValue("0");
                             }
                         }}
-                        className="w-full sm:w-36 md:w-40 px-2 sm:px-3 py-2 border border-gray-300 rounded text-center text-sm sm:text-base"
+                        className="w-32 sm:w-32 md:w-36 px-2 sm:px-3 py-2 border border-gray-300 rounded text-center text-sm sm:text-base"
                         disabled={set.completed}
                     />
                     <span className="text-xs sm:text-sm text-gray-600">
@@ -118,7 +118,9 @@ export function SetRow({ set, setNumber, onComplete, onRemove }: SetRowProps) {
                         unit={localWeightUnit}
                         onWeightChange={handleWeightChange}
                         disabled={set.completed}
-                        className="w-full sm:w-44 md:w-48"
+                        className="w-full sm:w-auto"
+                        compact
+                        inputClassName="sm:w-32 md:w-36"
                     />
                 </div>
             </div>

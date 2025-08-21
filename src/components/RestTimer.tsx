@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface RestTimerProps {
     exerciseName: string;
@@ -18,29 +18,107 @@ export function RestTimer({
     onComplete,
 }: RestTimerProps) {
     const [remainingTime, setRemainingTime] = useState(restTime);
+    const endAtRef = useRef<number | null>(null); // epoch ms
+    const completedRef = useRef(false);
+    const wakeLockRef = useRef<any>(null);
+    const storageKey = `restTimer:endAt:${exerciseName}`;
 
-    // Reset timer when restTime changes
+    // Initialize from storage or set a new endAt when (re)starting
     useEffect(() => {
-        setRemainingTime(restTime);
-    }, [restTime]);
+        if (!isActive) {
+            return;
+        }
 
-    // Countdown effect
+        // Try restoring an existing end time
+        const stored = localStorage.getItem(storageKey);
+        const now = Date.now();
+        if (stored) {
+            const parsed = Number(stored);
+            if (!Number.isNaN(parsed) && parsed > now) {
+                endAtRef.current = parsed;
+            }
+        }
+
+        // If no stored endAt, start a new rest window
+        if (!endAtRef.current) {
+            endAtRef.current = now + restTime * 1000;
+            localStorage.setItem(storageKey, String(endAtRef.current));
+        }
+
+        // Request a wake lock if supported (best effort)
+        const requestWakeLock = async () => {
+            try {
+                const anyNav: any = navigator as any;
+                if (anyNav?.wakeLock?.request) {
+                    wakeLockRef.current =
+                        await anyNav.wakeLock.request("screen");
+                }
+            } catch {
+                // ignore if not supported or denied
+            }
+        };
+        void requestWakeLock();
+
+        return () => {
+            // Release wake lock on stop/unmount
+            try {
+                if (wakeLockRef.current && wakeLockRef.current.release) {
+                    void wakeLockRef.current.release();
+                }
+            } catch {
+                // ignore
+            }
+            wakeLockRef.current = null;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isActive, restTime, exerciseName]);
+
+    // Countdown effect based on wall-clock time
     useEffect(() => {
         if (!isActive) return;
 
-        const interval = setInterval(() => {
-            setRemainingTime((prev) => {
-                if (prev <= 1) {
-                    // Timer finished
-                    onComplete();
-                    return 0;
+        const computeRemaining = () => {
+            const endAt = endAtRef.current;
+            if (!endAt) {
+                setRemainingTime(restTime);
+                return;
+            }
+            const now = Date.now();
+            const ms = Math.max(0, endAt - now);
+            const secs = Math.ceil(ms / 1000);
+            setRemainingTime(secs);
+            if (secs <= 0 && !completedRef.current) {
+                completedRef.current = true;
+                // Cleanup storage and wake lock when done
+                localStorage.removeItem(storageKey);
+                try {
+                    if (wakeLockRef.current && wakeLockRef.current.release) {
+                        void wakeLockRef.current.release();
+                    }
+                } catch {
+                    // ignore
                 }
-                return prev - 1;
-            });
-        }, 1000);
+                wakeLockRef.current = null;
+                onComplete();
+            }
+        };
 
-        return () => clearInterval(interval);
-    }, [isActive, onComplete]);
+        // Tick every second; background throttling is fine because we recompute from Date.now
+        const interval = setInterval(computeRemaining, 1000);
+        // Also compute immediately on start
+        computeRemaining();
+
+        const handleVisibility = () => computeRemaining();
+        window.addEventListener("visibilitychange", handleVisibility);
+        window.addEventListener("focus", handleVisibility);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener("visibilitychange", handleVisibility);
+            window.removeEventListener("focus", handleVisibility);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isActive, restTime, onComplete, exerciseName]);
 
     // Format time as MM:SS
     const formatTime = (seconds: number) => {
@@ -50,7 +128,8 @@ export function RestTimer({
     };
 
     // Calculate progress percentage
-    const progressPercentage = ((restTime - remainingTime) / restTime) * 100;
+    const total = Math.max(1, restTime);
+    const progressPercentage = ((total - remainingTime) / total) * 100;
 
     return (
         <div className="fixed bottom-20 left-4 right-4 z-50 sm:bottom-24 sm:left-8 sm:right-8">
