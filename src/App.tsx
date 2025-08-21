@@ -70,6 +70,15 @@ function App() {
                                 onNavigateToProfile={() =>
                                     setActiveTab("profile")
                                 }
+                                onNavigateToHistory={() =>
+                                    setActiveTab("history")
+                                }
+                                onNavigateToProgress={() =>
+                                    setActiveTab("progress")
+                                }
+                                onNavigateToSocial={() =>
+                                    setActiveTab("social")
+                                }
                             />
                         </div>
                     </div>
