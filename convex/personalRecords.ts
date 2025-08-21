@@ -118,22 +118,35 @@ export const updatePersonalRecords = mutation({
             )
             .first();
 
-        // Check for new weight PR
+        // Find the best weight PR from this session
+        let bestWeightSet = null;
         for (const set of args.sets) {
+            if (
+                !bestWeightSet ||
+                set.effectiveWeight > bestWeightSet.effectiveWeight ||
+                (set.effectiveWeight === bestWeightSet.effectiveWeight &&
+                    set.reps > bestWeightSet.reps)
+            ) {
+                bestWeightSet = set;
+            }
+        }
+
+        // Check if the best set from this session beats the current PR
+        if (bestWeightSet) {
             const isNewWeightPR =
                 !currentWeightPR ||
-                set.effectiveWeight > currentWeightPR.maxWeight ||
-                (set.effectiveWeight === currentWeightPR.maxWeight &&
-                    set.reps > currentWeightPR.reps);
+                bestWeightSet.effectiveWeight > currentWeightPR.maxWeight ||
+                (bestWeightSet.effectiveWeight === currentWeightPR.maxWeight &&
+                    bestWeightSet.reps > currentWeightPR.reps);
 
             if (isNewWeightPR) {
                 // Update or insert weight PR
                 if (currentWeightPR) {
                     await ctx.db.patch(currentWeightPR._id, {
-                        maxWeight: set.effectiveWeight, // effective weight in kg
-                        weight: set.weight, // original weight in original unit
-                        weightUnit: set.weightUnit, // original unit
-                        reps: set.reps,
+                        maxWeight: bestWeightSet.effectiveWeight, // effective weight in kg
+                        weight: bestWeightSet.weight, // original weight in original unit
+                        weightUnit: bestWeightSet.weightUnit, // original unit
+                        reps: bestWeightSet.reps,
                         date: Date.now(),
                         sessionId: args.sessionId,
                     });
@@ -141,33 +154,42 @@ export const updatePersonalRecords = mutation({
                     await ctx.db.insert("personalRecords", {
                         userId,
                         exerciseName: args.exerciseName,
-                        maxWeight: set.effectiveWeight, // effective weight in kg
-                        weight: set.weight, // original weight in original unit
-                        weightUnit: set.weightUnit, // original unit
-                        reps: set.reps,
+                        maxWeight: bestWeightSet.effectiveWeight, // effective weight in kg
+                        weight: bestWeightSet.weight, // original weight in original unit
+                        weightUnit: bestWeightSet.weightUnit, // original unit
+                        reps: bestWeightSet.reps,
                         date: Date.now(),
                         sessionId: args.sessionId,
                     });
                 }
                 newWeightPR = true;
-                break; // Only track the first new weight PR
             }
         }
 
-        // Check for new volume PR
+        // Find the best volume PR from this session
+        let bestVolumeSet = null;
+        let bestVolume = 0;
         for (const set of args.sets) {
             const volume = set.effectiveWeight * set.reps;
+            if (volume > bestVolume) {
+                bestVolume = volume;
+                bestVolumeSet = set;
+            }
+        }
+
+        // Check if the best volume from this session beats the current PR
+        if (bestVolumeSet) {
             const isNewVolumePR =
-                !currentVolumePR || volume > currentVolumePR.maxVolume;
+                !currentVolumePR || bestVolume > currentVolumePR.maxVolume;
 
             if (isNewVolumePR) {
                 // Update or insert volume PR
                 if (currentVolumePR) {
                     await ctx.db.patch(currentVolumePR._id, {
-                        maxVolume: volume, // volume in kg
-                        weight: set.weight, // original weight in original unit
-                        weightUnit: set.weightUnit, // original unit
-                        reps: set.reps,
+                        maxVolume: bestVolume, // volume in kg
+                        weight: bestVolumeSet.weight, // original weight in original unit
+                        weightUnit: bestVolumeSet.weightUnit, // original unit
+                        reps: bestVolumeSet.reps,
                         date: Date.now(),
                         sessionId: args.sessionId,
                     });
@@ -175,16 +197,15 @@ export const updatePersonalRecords = mutation({
                     await ctx.db.insert("volumeRecords", {
                         userId,
                         exerciseName: args.exerciseName,
-                        maxVolume: volume, // volume in kg
-                        weight: set.weight, // original weight in original unit
-                        weightUnit: set.weightUnit, // original unit
-                        reps: set.reps,
+                        maxVolume: bestVolume, // volume in kg
+                        weight: bestVolumeSet.weight, // original weight in original unit
+                        weightUnit: bestVolumeSet.weightUnit, // original unit
+                        reps: bestVolumeSet.reps,
                         date: Date.now(),
                         sessionId: args.sessionId,
                     });
                 }
                 newVolumePR = true;
-                break; // Only track the first new volume PR
             }
         }
 
