@@ -53,22 +53,38 @@ function App() {
             <header className="bg-background-secondary shadow-sm border-b border-accent-primary/20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
-                        <div className="flex items-center space-x-1">
-                            <div className="">
+                        <button
+                            onClick={() => {
+                                setActiveTab("workouts");
+                                setShowMobileNav(false);
+                            }}
+                            className="flex items-center space-x-1 group hover:bg-background-primary rounded-lg px-2 py-1 transition-all duration-200 transform hover:scale-105 active:scale-95"
+                            aria-label="Go to home (Workouts)"
+                        >
+                            <div className="group-hover:animate-pulse">
                                 <img
                                     src="/logo2.png"
                                     alt="FitFlow Pro Logo"
-                                    className="w-16 h-16 p-2 object-contain"
+                                    className="w-16 h-16 p-2 object-contain transition-transform duration-200"
                                 />
                             </div>
-                            <h1 className="text-xl font-bold text-text-primary font-montserrat">
+                            <h1 className="text-xl font-bold text-text-primary font-montserrat group-hover:text-accent-primary transition-colors duration-200">
                                 FitFlow Pro
                             </h1>
-                        </div>
+                        </button>
                         <div className="flex items-center space-x-1">
                             <UserProfileHeader
                                 onNavigateToProfile={() =>
                                     setActiveTab("profile")
+                                }
+                                onNavigateToHistory={() =>
+                                    setActiveTab("history")
+                                }
+                                onNavigateToProgress={() =>
+                                    setActiveTab("progress")
+                                }
+                                onNavigateToSocial={() =>
+                                    setActiveTab("social")
                                 }
                             />
                         </div>

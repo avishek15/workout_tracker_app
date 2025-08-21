@@ -2,8 +2,15 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
+import { RestTimer } from "./RestTimer";
 import { Play } from "lucide-react";
-import { WeightInput } from "./WeightInput";
+import { useBodyweightToggles } from "../lib/useBodyweightToggles";
+import { convertToKgFromUnit } from "../lib/unitConversion";
+import { SessionHeader } from "./SessionHeader";
+import { BodyWeightSection } from "./BodyWeightSection";
+import { ExerciseGroup } from "./ExerciseGroup";
+import { CompleteDialog } from "./CompleteDialog";
+import { FloatingActionBar } from "./FloatingActionBar";
 
 export function ActiveSession() {
     const activeSession = useQuery(api.sessions.getActive);
@@ -12,9 +19,40 @@ export function ActiveSession() {
     const completeSet = useMutation(api.sets.complete);
     const addSet = useMutation(api.sets.add);
     const removeSet = useMutation(api.sets.remove);
+    const updateSet = useMutation(api.sets.update);
+    const bulkFinalizeSets = useMutation(api.sets.bulkFinalize);
+    const updatePersonalRecords = useMutation(
+        api.personalRecords.updatePersonalRecords
+    );
 
     const [notes, setNotes] = useState("");
     const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+
+    // Track which exercises are expanded (all start collapsed)
+    const [expandedExercises, setExpandedExercises] = useState<Set<string>>(
+        new Set()
+    );
+
+    // Rest timer state
+    const [activeRestTimer, setActiveRestTimer] = useState<{
+        exerciseName: string;
+        restTime: number;
+        remainingTime: number;
+        isActive: boolean;
+    } | null>(null);
+
+    // Get body weight history from database
+    const bodyWeightHistory = useQuery(
+        api.bodyWeights.listBySession,
+        activeSession ? { sessionId: activeSession._id } : "skip"
+    );
+
+    // Get latest user body weight for fallback
+    const latestUserBodyWeight = useQuery(api.bodyWeights.latestForUser);
+
+    // Use custom hook for bodyweight toggles
+    const { toggleExerciseBodyweight, getExerciseBodyweight } =
+        useBodyweightToggles(activeSession?._id);
 
     if (activeSession === undefined) {
         return <div className="text-center py-8">Loading...</div>;
@@ -57,22 +95,14 @@ export function ActiveSession() {
         try {
             await completeSet({ setId: setId as any });
             toast.success("Set completed!");
-        } catch (error) {
-            toast.error("Failed to complete set");
-        }
-    };
 
-    const handleAddSet = async (exerciseName: string) => {
-        try {
-            await addSet({
-                sessionId: activeSession._id as any,
-                exerciseName,
-                reps: 10,
-                weight: undefined,
-            });
-            toast.success("Set added!");
-        } catch (error) {
-            toast.error("Failed to add set");
+            // Find the exercise name for this set and start rest timer
+            const set = activeSession.sets.find((s) => s._id === setId);
+            if (set) {
+                startRestTimer(set.exerciseName);
+            }
+        } catch {
+            toast.error("Failed to complete set");
         }
     };
 
@@ -81,40 +111,225 @@ export function ActiveSession() {
         try {
             await removeSet({ setId: setId as any });
             toast.success("Set removed");
-        } catch (error) {
+        } catch {
             toast.error("Failed to remove set");
         }
     };
 
-    const handleCompleteSession = async () => {
+    const handleAddSet = async (exerciseName: string) => {
         try {
-            await completeSession({
+            // Find the exercise to get its bodyweight setting
+            const exercise = exerciseGroups.find(
+                (ex) => ex.name === exerciseName
+            );
+            const isBodyweight = exercise?.isBodyweight || false;
+
+            await addSet({
                 sessionId: activeSession._id as any,
-                notes: notes.trim() || undefined,
+                exerciseName,
+                reps: 10,
+                weight: 0,
+                effectiveWeight: 0,
+                isBodyweight,
             });
-            toast.success("Workout completed! Great job!");
-            setShowCompleteDialog(false);
-        } catch (error) {
-            toast.error("Failed to complete session");
+            toast.success("Set added!");
+        } catch {
+            toast.error("Failed to add set");
         }
     };
 
     const handleCancelSession = async () => {
-        if (!confirm("Are you sure you want to cancel this workout session?"))
-            return;
+        if (!confirm("Cancel this workout session?")) return;
         try {
             await cancelSession({ sessionId: activeSession._id as any });
             toast.success("Session cancelled");
-        } catch (error) {
+        } catch {
             toast.error("Failed to cancel session");
         }
     };
 
-    const formatDuration = (startTime: number) => {
-        const duration = Date.now() - startTime;
-        const minutes = Math.floor(duration / 60000);
-        const seconds = Math.floor((duration % 60000) / 1000);
-        return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    const toggleExerciseExpansion = (exerciseName: string) => {
+        setExpandedExercises((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(exerciseName)) {
+                newSet.delete(exerciseName);
+            } else {
+                newSet.add(exerciseName);
+            }
+            return newSet;
+        });
+    };
+
+    // Start rest timer for an exercise
+    const startRestTimer = (exerciseName: string) => {
+        const exercise = activeSession.workout?.exercises?.find(
+            (ex) => ex.name === exerciseName
+        );
+
+        if (exercise && exercise.restTime) {
+            setActiveRestTimer({
+                exerciseName,
+                restTime: exercise.restTime,
+                remainingTime: exercise.restTime,
+                isActive: true,
+            });
+        }
+    };
+
+    // Skip rest timer
+    const skipRestTimer = () => {
+        setActiveRestTimer(null);
+    };
+
+    // Start next set (timer completed)
+    const startNextSet = () => {
+        setActiveRestTimer(null);
+        // Could add logic here to auto-expand the next set or focus on it
+    };
+
+    const handleCompleteSession = async () => {
+        try {
+            // 1) Resolve body weight in kg
+            let bodyWeightKg = 80; // fallback
+            const sessionWeights = bodyWeightHistory ?? [];
+            if (sessionWeights.length > 0) {
+                const latest = sessionWeights[0];
+                bodyWeightKg = convertToKgFromUnit(
+                    latest.weight || 0,
+                    (latest.weightUnit || "kg") as "kg" | "lbs"
+                );
+            } else {
+                // Use latest user body weight from database
+                if (latestUserBodyWeight) {
+                    bodyWeightKg = convertToKgFromUnit(
+                        latestUserBodyWeight.weight || 0,
+                        (latestUserBodyWeight.weightUnit || "kg") as
+                            | "kg"
+                            | "lbs"
+                    );
+                } else {
+                    // Final fallback to 80kg
+                    bodyWeightKg = 80;
+                }
+            }
+
+            // 2) Stage updates and compute total volume
+            const updates: Array<{
+                setId: string;
+                effectiveWeight: number;
+                isBodyweight: boolean;
+            }> = [];
+            const effectiveWeightsMap = new Map<string, number>(); // Store for reuse
+            let totalVolume = 0;
+
+            for (const exercise of exerciseGroups) {
+                const isBwExercise = !!exercise.isBodyweight;
+                for (const set of exercise.sets) {
+                    if (!set.completed) continue;
+                    const weightKg = convertToKgFromUnit(
+                        set.weight || 0,
+                        set.weightUnit || "kg"
+                    );
+                    const effectiveWeight = isBwExercise
+                        ? Math.max(bodyWeightKg - weightKg, 0)
+                        : weightKg;
+
+                    updates.push({
+                        setId: set._id,
+                        effectiveWeight,
+                        isBodyweight: isBwExercise,
+                    });
+                    effectiveWeightsMap.set(set._id, effectiveWeight); // Store for reuse
+                    totalVolume += (set.reps || 0) * effectiveWeight;
+                }
+            }
+
+            // 3) Persist set updates in bulk (fallback to per-set if needed)
+            try {
+                await bulkFinalizeSets({
+                    updates: updates.map((u) => ({
+                        setId: u.setId as any,
+                        effectiveWeight: u.effectiveWeight,
+                        isBodyweight: u.isBodyweight,
+                    })),
+                });
+            } catch {
+                // Fallback: per-set updates
+                for (const u of updates) {
+                    await updateSet({
+                        setId: u.setId as any,
+                        reps: 0,
+                        weight: undefined,
+                        weightUnit: undefined,
+                        effectiveWeight: u.effectiveWeight,
+                        isBodyweight: u.isBodyweight,
+                    });
+                }
+            }
+
+            // 4) Update personal records for each exercise
+            const exercisePRs = new Map<
+                string,
+                { newWeightPR: boolean; newVolumePR: boolean }
+            >();
+
+            for (const exercise of exerciseGroups) {
+                const completedSets = exercise.sets.filter(
+                    (set) => set.completed
+                );
+                if (completedSets.length === 0) continue;
+
+                const setsData = completedSets.map((set) => {
+                    // Reuse the effective weight we already calculated
+                    const effectiveWeight =
+                        effectiveWeightsMap.get(set._id) || 0;
+
+                    return {
+                        effectiveWeight,
+                        weight: set.weight || 0, // original weight in original unit
+                        weightUnit: set.weightUnit || "kg", // original unit
+                        reps: set.reps || 0,
+                    };
+                });
+
+                try {
+                    const result = await updatePersonalRecords({
+                        exerciseName: exercise.name,
+                        sessionId: activeSession._id as any,
+                        sets: setsData,
+                    });
+
+                    exercisePRs.set(exercise.name, result);
+                } catch (error) {
+                    console.error(
+                        `Failed to update PRs for ${exercise.name}:`,
+                        error
+                    );
+                }
+            }
+
+            // 5) Complete the session with totalVolume
+            await completeSession({
+                sessionId: activeSession._id as any,
+                notes: notes.trim() || undefined,
+                totalVolume,
+            });
+
+            // 6) Show PR notifications
+            for (const [exerciseName, prs] of exercisePRs) {
+                if (prs.newWeightPR) {
+                    toast.success(`🏆 New weight PR for ${exerciseName}!`);
+                }
+                if (prs.newVolumePR) {
+                    toast.success(`📊 New volume PR for ${exerciseName}!`);
+                }
+            }
+
+            toast.success("Workout completed!");
+            setShowCompleteDialog(false);
+        } catch {
+            toast.error("Failed to complete session");
+        }
     };
 
     // Group sets by exercise
@@ -123,6 +338,10 @@ export function ActiveSession() {
             ...exercise,
             sets: activeSession.sets.filter(
                 (set) => set.exerciseName === exercise.name
+            ),
+            isBodyweight: getExerciseBodyweight(
+                exercise.name,
+                exercise.isBodyweight || false
             ),
         })) || [];
 
@@ -134,237 +353,72 @@ export function ActiveSession() {
     return (
         <div className="space-y-6 pb-20">
             {/* Session Header */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-6 relative overflow-hidden">
-                {/* Animated background overlay */}
-                <div className="absolute inset-0 bg-green-100 opacity-0 animate-pulse-slow pointer-events-none"></div>
-                {/* Content */}
-                <div className="relative z-10">
-                    <div className="flex justify-between items-start gap-4 mb-4">
-                        <div className="flex-1">
-                            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                                {activeSession.workout?.name}
-                            </h2>
-                            <p className="text-gray-600 text-sm sm:text-base">
-                                Started{" "}
-                                {formatDuration(activeSession.startTime)} ago
-                            </p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                            <div className="text-2xl sm:text-3xl font-bold text-green-600">
-                                {completedSets}/{totalSets}
-                            </div>
-                            <div className="text-sm sm:text-base text-gray-600">
-                                sets completed
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <SessionHeader
+                sessionName={activeSession.workout?.name || ""}
+                startTime={activeSession.startTime}
+                completedSets={completedSets}
+                totalSets={totalSets}
+            />
+
+            {/* Optional Body Weight Section */}
+            <BodyWeightSection
+                sessionId={activeSession._id}
+                bodyWeightHistory={bodyWeightHistory}
+            />
 
             {/* Exercises */}
             <div className="space-y-6">
                 {exerciseGroups.map((exercise, exerciseIndex) => (
-                    <div key={exerciseIndex}>
-                        <div className="border rounded-lg p-4 sm:p-6">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-                                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 capitalize">
-                                    {exercise.name}
-                                </h3>
-                            </div>
-
-                            <div className="space-y-3">
-                                {exercise.sets.map((set, setIndex) => (
-                                    <SetRow
-                                        key={set._id}
-                                        set={set}
-                                        setNumber={setIndex + 1}
-                                        onComplete={(setId) =>
-                                            void handleCompleteSet(setId)
-                                        }
-                                        onRemove={(setId) =>
-                                            void handleRemoveSet(setId)
-                                        }
-                                    />
-                                ))}
-                            </div>
-
-                            {/* Add Set Button at Bottom */}
-                            <div className="mt-4 pt-4 border-t border-gray-200">
-                                <button
-                                    onClick={() =>
-                                        void handleAddSet(exercise.name)
-                                    }
-                                    className="w-full bg-accent-primary text-white px-4 py-3 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium"
-                                >
-                                    + Add Set
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Exercise Separator */}
-                        {exerciseIndex < exerciseGroups.length - 1 && (
-                            <div className="flex items-center justify-center py-4">
-                                <div className="w-16 h-px bg-gray-300"></div>
-                                <div className="mx-4 text-xs text-gray-500 font-medium uppercase tracking-wider">
-                                    Next Exercise
-                                </div>
-                                <div className="w-16 h-px bg-gray-300"></div>
-                            </div>
+                    <ExerciseGroup
+                        key={`${exercise.name}-${exerciseIndex}`}
+                        exercise={exercise}
+                        exerciseIndex={exerciseIndex}
+                        totalExercises={exerciseGroups.length}
+                        onCompleteSet={(setId) => void handleCompleteSet(setId)}
+                        onRemoveSet={(setId) => void handleRemoveSet(setId)}
+                        onAddSet={(exerciseName) =>
+                            void handleAddSet(exerciseName)
+                        }
+                        onToggleBodyweight={toggleExerciseBodyweight}
+                        isBodyweight={exercise.isBodyweight}
+                        isExpanded={expandedExercises.has(
+                            `${exercise.name}-${exerciseIndex}`
                         )}
-                    </div>
+                        onToggleExpansion={() =>
+                            toggleExerciseExpansion(
+                                `${exercise.name}-${exerciseIndex}`
+                            )
+                        }
+                    />
                 ))}
             </div>
 
             {/* Complete Dialog */}
-            {showCompleteDialog && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md mx-4">
-                        <h3 className="text-lg font-semibold mb-4">
-                            Complete Workout
-                        </h3>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Notes (optional)
-                                </label>
-                                <textarea
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    rows={3}
-                                    placeholder="How did the workout go?"
-                                />
-                            </div>
-                            <div className="flex flex-col sm:flex-row gap-3">
-                                <button
-                                    onClick={() => setShowCompleteDialog(false)}
-                                    className="w-full sm:flex-1 px-4 py-3 sm:py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={() => void handleCompleteSession()}
-                                    className="w-full sm:flex-1 bg-accent-primary text-white px-4 py-3 sm:py-2 rounded-lg hover:bg-accent-primary/90 transition-colors"
-                                >
-                                    Complete
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <CompleteDialog
+                isOpen={showCompleteDialog}
+                notes={notes}
+                onNotesChange={setNotes}
+                onCancel={() => setShowCompleteDialog(false)}
+                onComplete={() => void handleCompleteSession()}
+            />
 
             {/* Floating Action Bar */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-300 shadow-lg z-40 px-4 py-3">
-                <div className="max-w-7xl mx-auto flex gap-3">
-                    <button
-                        onClick={() => void handleCancelSession()}
-                        className="flex-1 bg-danger text-white px-4 py-3 rounded-lg hover:bg-danger-hover transition-all duration-200 font-medium shadow-md hover:shadow-lg sm:text-base"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={() => setShowCompleteDialog(true)}
-                        className="flex-1 bg-accent-primary text-white px-4 py-3 rounded-lg hover:bg-accent-primary/90 transition-all duration-200 font-medium shadow-md hover:shadow-lg sm:text-base"
-                    >
-                        Complete Workout
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
+            <FloatingActionBar
+                onCancel={() => void handleCancelSession()}
+                onComplete={() => setShowCompleteDialog(true)}
+            />
 
-interface SetRowProps {
-    set: any;
-    setNumber: number;
-    onComplete: (setId: string) => void;
-    onRemove: (setId: string) => void;
-}
-
-function SetRow({ set, setNumber, onComplete, onRemove }: SetRowProps) {
-    const updateSet = useMutation(api.sets.update);
-
-    const handleWeightChange = (weight: number, unit: "kg" | "lbs") => {
-        void updateSet({
-            setId: set._id,
-            reps: set.reps,
-            weight: weight > 0 ? weight : undefined,
-            weightUnit: unit,
-        });
-    };
-
-    const handleRepsChange = (reps: number) => {
-        void updateSet({
-            setId: set._id,
-            reps,
-            weight: set.weight,
-            weightUnit: set.weightUnit,
-        });
-    };
-
-    return (
-        <div
-            className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 rounded-lg border ${
-                set.completed
-                    ? "bg-green-50 border-green-200"
-                    : "bg-gray-50 border-gray-200"
-            }`}
-        >
-            {/* Set Number */}
-            <div className="w-8 text-center font-medium text-gray-600 flex-shrink-0">
-                {setNumber}
-            </div>
-
-            {/* Input Fields */}
-            <div className="flex flex-col sm:flex-row gap-3 flex-1">
-                <div className="flex items-center gap-2">
-                    <input
-                        type="number"
-                        min="0"
-                        value={set.reps}
-                        onChange={(e) =>
-                            handleRepsChange(parseInt(e.target.value) || 0)
-                        }
-                        className="w-20 sm:w-16 px-3 py-2 sm:py-1 border border-gray-300 rounded text-center"
-                        disabled={set.completed}
-                    />
-                    <span className="text-sm text-gray-600">reps</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <WeightInput
-                        value={set.weight}
-                        unit={set.weightUnit || "kg"}
-                        onWeightChange={handleWeightChange}
-                        disabled={set.completed}
-                        className="w-48 sm:w-44"
-                    />
-                </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-                {!set.completed ? (
-                    <button
-                        onClick={() => void onComplete(set._id)}
-                        className="flex-1 sm:flex-none bg-accent-primary text-white px-4 py-2 rounded text-sm hover:bg-accent-primary/90 transition-colors"
-                    >
-                        ✓ Done
-                    </button>
-                ) : (
-                    <span className="flex-1 sm:flex-none text-green-600 font-medium text-sm text-center">
-                        ✓ Completed
-                    </span>
-                )}
-
-                <button
-                    onClick={() => void onRemove(set._id)}
-                    className="text-danger hover:text-danger-hover font-bold text-lg px-2 py-1"
-                >
-                    ×
-                </button>
-            </div>
+            {/* Rest Timer */}
+            {activeRestTimer && (
+                <RestTimer
+                    exerciseName={activeRestTimer.exerciseName}
+                    restTime={activeRestTimer.restTime}
+                    isActive={activeRestTimer.isActive}
+                    onSkip={skipRestTimer}
+                    onStartNextSet={startNextSet}
+                    onComplete={startNextSet}
+                />
+            )}
         </div>
     );
 }

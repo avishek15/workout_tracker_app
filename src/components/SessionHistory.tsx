@@ -448,6 +448,55 @@ function SessionDetailsModal({
         };
     };
 
+    const formatEffectiveWeightForDisplay = (set: any) => {
+        if (set.effectiveWeight === undefined || set.effectiveWeight === null) {
+            return null;
+        }
+
+        const userPreferredUnit = getDefaultWeightUnit();
+
+        // effectiveWeight is always stored in kg, convert to user's preferred unit
+        const convertedWeight = convertWeight(
+            set.effectiveWeight,
+            "kg",
+            userPreferredUnit
+        );
+        return {
+            weight: Number(convertedWeight.toFixed(3)),
+            unit: userPreferredUnit,
+        };
+    };
+
+    const formatBodyweightCalculation = (set: any) => {
+        if (!set.isBodyweight || set.effectiveWeight === undefined) {
+            return null;
+        }
+
+        const userPreferredUnit = getDefaultWeightUnit();
+        const originalWeight = set.weight || 0;
+        const setUnit: WeightUnit = set.weightUnit || "kg";
+
+        // Convert original weight to user's preferred unit
+        const convertedOriginalWeight = convertWeight(
+            originalWeight,
+            setUnit,
+            userPreferredUnit
+        );
+
+        // Convert effective weight to user's preferred unit
+        const convertedEffectiveWeight = convertWeight(
+            set.effectiveWeight,
+            "kg",
+            userPreferredUnit
+        );
+
+        return {
+            originalWeight: Number(convertedOriginalWeight.toFixed(3)),
+            effectiveWeight: Number(convertedEffectiveWeight.toFixed(3)),
+            unit: userPreferredUnit,
+        };
+    };
+
     // Group sets by exercise
     const exerciseGroups =
         session.sets?.reduce((groups: any, set: any) => {
@@ -512,6 +561,100 @@ function SessionDetailsModal({
                             </div>
                         )}
 
+                        {/* Volume Breakdown */}
+                        <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                            <div className="text-sm font-medium text-gray-700 mb-3">
+                                Volume Breakdown:
+                            </div>
+                            <div className="space-y-2">
+                                {Object.entries(exerciseGroups).map(
+                                    ([exerciseName, sets]: [string, any]) => {
+                                        const exerciseSets = sets as any[];
+
+                                        let exerciseVolume = 0;
+                                        let bodyweightVolume = 0;
+                                        let regularVolume = 0;
+
+                                        exerciseSets.forEach((set: any) => {
+                                            if (
+                                                set.completed &&
+                                                set.effectiveWeight !==
+                                                    undefined
+                                            ) {
+                                                const setVolume =
+                                                    set.reps *
+                                                    set.effectiveWeight;
+                                                exerciseVolume += setVolume;
+
+                                                if (set.isBodyweight) {
+                                                    bodyweightVolume +=
+                                                        setVolume;
+                                                } else {
+                                                    regularVolume += setVolume;
+                                                }
+                                            }
+                                        });
+
+                                        if (exerciseVolume > 0) {
+                                            const userUnit =
+                                                getDefaultWeightUnit();
+                                            const convertedVolume =
+                                                convertWeight(
+                                                    exerciseVolume,
+                                                    "kg",
+                                                    userUnit
+                                                );
+
+                                            return (
+                                                <div
+                                                    key={exerciseName}
+                                                    className="flex justify-between items-center text-sm"
+                                                >
+                                                    <span className="text-gray-600">
+                                                        {exerciseName}
+                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        {bodyweightVolume >
+                                                            0 && (
+                                                            <span className="text-blue-600 text-xs">
+                                                                {convertWeight(
+                                                                    bodyweightVolume,
+                                                                    "kg",
+                                                                    userUnit
+                                                                ).toFixed(
+                                                                    1
+                                                                )}{" "}
+                                                                {userUnit} (BW)
+                                                            </span>
+                                                        )}
+                                                        {regularVolume > 0 && (
+                                                            <span className="text-gray-600 text-xs">
+                                                                {convertWeight(
+                                                                    regularVolume,
+                                                                    "kg",
+                                                                    userUnit
+                                                                ).toFixed(
+                                                                    1
+                                                                )}{" "}
+                                                                {userUnit} (Reg)
+                                                            </span>
+                                                        )}
+                                                        <span className="font-medium text-gray-700">
+                                                            {convertedVolume.toFixed(
+                                                                1
+                                                            )}{" "}
+                                                            {userUnit} total
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }
+                                )}
+                            </div>
+                        </div>
+
                         <div className="space-y-8">
                             {Object.entries(exerciseGroups).map(
                                 ([exerciseName, sets]: [string, any]) => (
@@ -519,9 +662,16 @@ function SessionDetailsModal({
                                         key={exerciseName}
                                         className="border rounded-lg p-6"
                                     >
-                                        <h4 className="text-lg font-semibold text-gray-900 mb-3">
-                                            {exerciseName}
-                                        </h4>
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <h4 className="text-lg font-semibold text-gray-900">
+                                                {exerciseName}
+                                            </h4>
+                                            {sets[0]?.isBodyweight && (
+                                                <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
+                                                    Bodyweight Exercise
+                                                </span>
+                                            )}
+                                        </div>
                                         <div className="space-y-2">
                                             {sets.map(
                                                 (set: any, index: number) => (
@@ -541,22 +691,61 @@ function SessionDetailsModal({
                                                                 {set.reps} reps
                                                             </span>
                                                             {(() => {
-                                                                const weightInfo =
-                                                                    formatWeightForDisplay(
-                                                                        set
+                                                                if (
+                                                                    set.isBodyweight &&
+                                                                    set.effectiveWeight !==
+                                                                        undefined
+                                                                ) {
+                                                                    const bodyweightInfo =
+                                                                        formatBodyweightCalculation(
+                                                                            set
+                                                                        );
+                                                                    const effectiveWeightInfo =
+                                                                        formatEffectiveWeightForDisplay(
+                                                                            set
+                                                                        );
+
+                                                                    return (
+                                                                        <div className="flex flex-col gap-1">
+                                                                            <span className="text-gray-700 text-sm sm:text-base">
+                                                                                {
+                                                                                    bodyweightInfo?.originalWeight
+                                                                                }{" "}
+                                                                                {
+                                                                                    bodyweightInfo?.unit
+                                                                                }{" "}
+                                                                                assist
+                                                                            </span>
+                                                                            <span className="text-blue-600 text-sm font-medium">
+                                                                                ={" "}
+                                                                                {
+                                                                                    effectiveWeightInfo?.weight
+                                                                                }{" "}
+                                                                                {
+                                                                                    effectiveWeightInfo?.unit
+                                                                                }{" "}
+                                                                                effective
+                                                                            </span>
+                                                                        </div>
                                                                     );
-                                                                return (
-                                                                    weightInfo && (
-                                                                        <span className="text-gray-700 text-sm sm:text-base">
-                                                                            {
-                                                                                weightInfo.weight
-                                                                            }{" "}
-                                                                            {
-                                                                                weightInfo.unit
-                                                                            }
-                                                                        </span>
-                                                                    )
-                                                                );
+                                                                } else {
+                                                                    const weightInfo =
+                                                                        formatWeightForDisplay(
+                                                                            set
+                                                                        );
+                                                                    return (
+                                                                        weightInfo && (
+                                                                            <span className="text-gray-700 text-sm sm:text-base">
+                                                                                {
+                                                                                    weightInfo.weight
+                                                                                }{" "}
+                                                                                {
+                                                                                    weightInfo.unit
+                                                                                }
+                                                                            </span>
+                                                                        )
+                                                                    );
+                                                                }
                                                             })()}
                                                         </div>
                                                         <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">

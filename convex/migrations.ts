@@ -1,120 +1,139 @@
-import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
+import { v } from "convex/values";
 
-// Temporary migration function to calculate totalVolume for existing sessions
-export const migrateTotalVolume = internalMutation({
+/**
+ * Migration to backfill personal records from existing sets data
+ */
+export const backfillPersonalRecords = internalMutation({
     args: {},
-    returns: v.null(),
+    returns: v.object({
+        weightRecordsCreated: v.number(),
+        volumeRecordsCreated: v.number(),
+        errors: v.array(v.string()),
+    }),
     handler: async (ctx) => {
-        // Get all sessions that don't have totalVolume yet
-        const sessions = await ctx.db
-            .query("sessions")
-            .filter((q) => q.eq(q.field("totalVolume"), undefined))
-            .collect();
+        const errors: string[] = [];
+        let weightRecordsCreated = 0;
+        let volumeRecordsCreated = 0;
 
-        console.log(`Found ${sessions.length} sessions to migrate`);
-
-        for (const session of sessions) {
-            // Get all sets for this session
-            const sets = await ctx.db
+        try {
+            // Get all completed sets
+            const allSets = await ctx.db
                 .query("sets")
-                .withIndex("by_session", (q) => q.eq("sessionId", session._id))
                 .filter((q) => q.eq(q.field("completed"), true))
                 .collect();
 
-            // Calculate total volume in kg
-            let totalVolume = 0;
-            for (const set of sets) {
-                if (set.weight && set.reps) {
-                    let weightInKg = set.weight;
+            // Group sets by user and exercise
+            const userExerciseMap = new Map<string, Map<string, any[]>>();
 
-                    // Convert to kg if needed
-                    if (set.weightUnit === "lbs") {
-                        weightInKg = set.weight * 0.453592; // Convert lbs to kg
-                    }
-                    // If weightUnit is missing or kg, use as-is
+            for (const set of allSets) {
+                const userId = set.userId;
+                const exerciseName = set.exerciseName;
 
-                    totalVolume += weightInKg * set.reps;
+                if (!userExerciseMap.has(userId)) {
+                    userExerciseMap.set(userId, new Map());
                 }
+
+                const exerciseMap = userExerciseMap.get(userId)!;
+                if (!exerciseMap.has(exerciseName)) {
+                    exerciseMap.set(exerciseName, []);
+                }
+
+                exerciseMap.get(exerciseName)!.push(set);
             }
 
-            // Update the session with calculated totalVolume
-            await ctx.db.patch(session._id, {
-                totalVolume: totalVolume,
-            });
+            // Process each user's exercises
+            for (const [userId, exerciseMap] of userExerciseMap) {
+                for (const [exerciseName, sets] of exerciseMap) {
+                    try {
+                        // Find weight PR (highest weight, then highest reps at that weight)
+                        let weightPR = null;
+                        for (const set of sets) {
+                            const effectiveWeight =
+                                set.effectiveWeight || set.weight || 0;
+                            const reps = set.reps || 0;
 
-            console.log(
-                `Updated session ${session._id} with volume: ${totalVolume}`
-            );
-        }
-
-        console.log("Migration completed");
-        return null;
-    },
-});
-
-// Migration function to backfill denormalized fields for existing sessions
-export const migrateDenormalizedFields = internalMutation({
-    args: {},
-    returns: v.null(),
-    handler: async (ctx) => {
-        // Get all completed sessions that need denormalized fields
-        // We need to get all sessions and filter by status since we can't query by status alone
-        const allSessions = await ctx.db.query("sessions").collect();
-
-        const sessions = allSessions.filter(
-            (session) => session.status === "completed"
-        );
-
-        console.log(`Found ${sessions.length} completed sessions to migrate`);
-
-        for (const session of sessions) {
-            // Get all sets for this session
-            const sets = await ctx.db
-                .query("sets")
-                .withIndex("by_session", (q) => q.eq("sessionId", session._id))
-                .collect();
-
-            // Calculate denormalized fields
-            const completedSets = sets.filter((set) => set.completed).length;
-            const totalSets = sets.length;
-
-            // Get unique exercise names
-            const uniqueExercises = new Set(
-                sets.map((set) => set.exerciseName)
-            );
-            const exerciseCount = uniqueExercises.size;
-
-            // Calculate total volume if not already present
-            let totalVolume = session.totalVolume;
-            if (totalVolume === undefined) {
-                totalVolume = 0;
-                for (const set of sets) {
-                    if (set.completed && set.weight && set.reps) {
-                        let weightInKg = set.weight;
-                        // Convert to kg if needed
-                        if (set.weightUnit === "lbs") {
-                            weightInKg = set.weight * 0.453592;
+                            if (
+                                !weightPR ||
+                                effectiveWeight > weightPR.weight ||
+                                (effectiveWeight === weightPR.weight &&
+                                    reps > weightPR.reps)
+                            ) {
+                                weightPR = {
+                                    weight: effectiveWeight, // effective weight in kg
+                                    originalWeight: set.weight || 0, // original weight
+                                    reps: reps,
+                                    weightUnit: set.weightUnit || "kg", // original unit
+                                    date: set._creationTime,
+                                    sessionId: set.sessionId,
+                                };
+                            }
                         }
-                        totalVolume += weightInKg * set.reps;
+
+                        // Find volume PR (highest volume)
+                        let volumePR = null;
+                        for (const set of sets) {
+                            const effectiveWeight =
+                                set.effectiveWeight || set.weight || 0;
+                            const reps = set.reps || 0;
+                            const volume = effectiveWeight * reps;
+
+                            if (!volumePR || volume > volumePR.volume) {
+                                volumePR = {
+                                    volume: volume, // volume in kg
+                                    originalWeight: set.weight || 0, // original weight
+                                    reps: reps,
+                                    weightUnit: set.weightUnit || "kg", // original unit
+                                    date: set._creationTime,
+                                    sessionId: set.sessionId,
+                                };
+                            }
+                        }
+
+                        // Insert weight PR if found
+                        if (weightPR) {
+                            await ctx.db.insert("personalRecords", {
+                                userId: userId as any,
+                                exerciseName: exerciseName,
+                                maxWeight: weightPR.weight, // effective weight in kg
+                                weight: weightPR.originalWeight, // original weight
+                                weightUnit: weightPR.weightUnit, // original unit
+                                reps: weightPR.reps,
+                                date: weightPR.date,
+                                sessionId: weightPR.sessionId,
+                            });
+                            weightRecordsCreated++;
+                        }
+
+                        // Insert volume PR if found
+                        if (volumePR) {
+                            await ctx.db.insert("volumeRecords", {
+                                userId: userId as any,
+                                exerciseName: exerciseName,
+                                maxVolume: volumePR.volume, // volume in kg
+                                weight: volumePR.originalWeight, // original weight
+                                weightUnit: volumePR.weightUnit, // original unit
+                                reps: volumePR.reps,
+                                date: volumePR.date,
+                                sessionId: volumePR.sessionId,
+                            });
+                            volumeRecordsCreated++;
+                        }
+                    } catch (error) {
+                        errors.push(
+                            `Error processing ${exerciseName} for user ${userId}: ${String(error)}`
+                        );
                     }
                 }
             }
-
-            // Update the session with denormalized fields
-            await ctx.db.patch(session._id, {
-                completedSets,
-                totalSets,
-                exerciseCount,
-                totalVolume,
-            });
-
-            console.log(
-                `Updated session ${session._id}: ${completedSets}/${totalSets} sets, ${exerciseCount} exercises, volume: ${totalVolume}`
-            );
+        } catch (error) {
+            errors.push(`Migration failed: ${String(error)}`);
         }
 
-        console.log("Denormalized fields migration completed");
-        return null;
+        return {
+            weightRecordsCreated,
+            volumeRecordsCreated,
+            errors,
+        };
     },
 });

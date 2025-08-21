@@ -15,8 +15,11 @@ import type {
 } from "convex/server";
 import type * as analytics from "../analytics.js";
 import type * as auth from "../auth.js";
+import type * as bodyWeights from "../bodyWeights.js";
+import type * as exercises from "../exercises.js";
 import type * as http from "../http.js";
 import type * as migrations from "../migrations.js";
+import type * as personalRecords from "../personalRecords.js";
 import type * as router from "../router.js";
 import type * as sessions from "../sessions.js";
 import type * as sets from "../sets.js";
@@ -36,8 +39,11 @@ import type * as workouts from "../workouts.js";
 declare const fullApi: ApiFromModules<{
   analytics: typeof analytics;
   auth: typeof auth;
+  bodyWeights: typeof bodyWeights;
+  exercises: typeof exercises;
   http: typeof http;
   migrations: typeof migrations;
+  personalRecords: typeof personalRecords;
   router: typeof router;
   sessions: typeof sessions;
   sets: typeof sets;

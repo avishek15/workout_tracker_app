@@ -371,13 +371,12 @@ export const getFavoriteExercises = internalQuery({
     },
 });
 
-// Calculate session summary (volume, sets, exercises)
+// Calculate session summary (sets, exercises - volume calculated on frontend)
 export const calculateSessionSummary = internalQuery({
     args: {
         sessionId: v.id("sessions"),
     },
     returns: v.object({
-        totalVolume: v.number(),
         completedSets: v.number(),
         totalSets: v.number(),
         exerciseCount: v.number(),
@@ -397,21 +396,7 @@ export const calculateSessionSummary = internalQuery({
         const uniqueExercises = new Set(sets.map((set) => set.exerciseName));
         const exerciseCount = uniqueExercises.size;
 
-        // Calculate total volume (convert to kg)
-        let totalVolume = 0;
-        for (const set of sets) {
-            if (set.completed && set.weight && set.reps) {
-                let weightInKg = set.weight;
-                // Convert lbs to kg if needed
-                if (set.weightUnit === "lbs") {
-                    weightInKg = set.weight * 0.453592;
-                }
-                totalVolume += weightInKg * set.reps;
-            }
-        }
-
         return {
-            totalVolume,
             completedSets,
             totalSets,
             exerciseCount,

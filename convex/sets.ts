@@ -30,6 +30,8 @@ export const update = mutation({
         reps: v.number(),
         weight: v.optional(v.number()),
         weightUnit: v.optional(v.union(v.literal("kg"), v.literal("lbs"))),
+        effectiveWeight: v.optional(v.number()),
+        isBodyweight: v.optional(v.boolean()),
     },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
@@ -51,8 +53,42 @@ export const update = mutation({
             reps: args.reps,
             weight: args.weight,
             weightUnit: args.weightUnit,
+            effectiveWeight: args.effectiveWeight,
+            isBodyweight: args.isBodyweight,
             updatedAt: Date.now(),
         });
+    },
+});
+
+// Bulk finalize sets (effectiveWeight + isBodyweight)
+export const bulkFinalize = mutation({
+    args: {
+        updates: v.array(
+            v.object({
+                setId: v.id("sets"),
+                effectiveWeight: v.number(),
+                isBodyweight: v.boolean(),
+            })
+        ),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) {
+            throw new Error("Not authenticated");
+        }
+
+        for (const u of args.updates) {
+            const set = await ctx.db.get(u.setId);
+            if (!set) continue;
+            const session = await ctx.db.get(set.sessionId);
+            if (!session || session.userId !== userId) continue;
+            await ctx.db.patch(u.setId, {
+                effectiveWeight: u.effectiveWeight,
+                isBodyweight: u.isBodyweight,
+                updatedAt: Date.now(),
+            });
+        }
+        return null;
     },
 });
 
@@ -89,6 +125,7 @@ export const completeWithWeight = mutation({
         setId: v.id("sets"),
         weight: v.optional(v.number()),
         weightUnit: v.optional(v.union(v.literal("kg"), v.literal("lbs"))),
+        effectiveWeight: v.optional(v.number()),
     },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
@@ -109,6 +146,7 @@ export const completeWithWeight = mutation({
         await ctx.db.patch(args.setId, {
             weight: args.weight,
             weightUnit: args.weightUnit,
+            effectiveWeight: args.effectiveWeight,
             completed: true,
             completedAt: Date.now(),
             updatedAt: Date.now(),
@@ -124,6 +162,8 @@ export const add = mutation({
         reps: v.number(),
         weight: v.optional(v.number()),
         weightUnit: v.optional(v.union(v.literal("kg"), v.literal("lbs"))),
+        effectiveWeight: v.optional(v.number()),
+        isBodyweight: v.optional(v.boolean()),
     },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
@@ -153,11 +193,14 @@ export const add = mutation({
 
         await ctx.db.insert("sets", {
             sessionId: args.sessionId,
+            userId,
             exerciseName: args.exerciseName,
             setNumber: maxSetNumber + 1,
             reps: args.reps,
             weight: args.weight,
             weightUnit: args.weightUnit,
+            effectiveWeight: args.effectiveWeight,
+            isBodyweight: args.isBodyweight,
             completed: false,
             updatedAt: Date.now(),
         });

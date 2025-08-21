@@ -177,13 +177,24 @@ export function CreateWorkout({ onClose }: CreateWorkoutProps) {
                                 type="number"
                                 min="1"
                                 value={currentExercise.targetSets}
-                                onChange={(e) =>
-                                    setCurrentExercise({
-                                        ...currentExercise,
-                                        targetSets:
-                                            parseInt(e.target.value) || 1,
-                                    })
-                                }
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    // Allow empty string for better UX with backspace
+                                    if (value === "") {
+                                        setCurrentExercise({
+                                            ...currentExercise,
+                                            targetSets: 1,
+                                        });
+                                    } else {
+                                        const numValue = parseInt(value);
+                                        if (!isNaN(numValue) && numValue >= 1) {
+                                            setCurrentExercise({
+                                                ...currentExercise,
+                                                targetSets: numValue,
+                                            });
+                                        }
+                                    }
+                                }}
                                 className="w-full px-3 py-2 border border-accent-primary/30 rounded-lg focus:ring-2 focus:ring-accent-primary focus:border-transparent bg-background-primary text-text-primary"
                             />
                         </div>
