@@ -1,9 +1,15 @@
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Switch } from "./ui/switch";
 import { SetRow } from "./SetRow";
+import { formatDistanceToNow } from "date-fns";
+import {
+    convertFromKg,
+    convertToKg,
+    getUserDisplayUnit,
+} from "../lib/unitConversion";
 
 interface ExerciseGroupProps {
     exercise: any;
@@ -30,6 +36,15 @@ export function ExerciseGroup({
     isExpanded,
     onToggleExpansion,
 }: ExerciseGroupProps) {
+    // Get last session performance for this exercise
+    const lastPerformance = useQuery(api.exercises.getLastExercisePerformance, {
+        exerciseName: exercise.name,
+    });
+
+    // Get personal records for this exercise
+    const exercisePRs = useQuery(api.personalRecords.getExercisePRs, {
+        exerciseName: exercise.name,
+    });
     return (
         <div className="space-y-4">
             {/* Exercise Header */}
@@ -57,27 +72,79 @@ export function ExerciseGroup({
                             <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                                 {exercise.name}
                             </h3>
-                            <p className="text-sm text-gray-600">
-                                {exercise.sets.length} set
-                                {exercise.sets.length !== 1 ? "s" : ""} •{" "}
-                                {
-                                    exercise.sets.filter(
-                                        (s: any) => s.completed
-                                    ).length
-                                }{" "}
-                                completed
-                                {(() => {
-                                    const nextSet = exercise.sets.find(
-                                        (s: any) => !s.completed
-                                    );
-                                    if (nextSet) {
-                                        const setIndex =
-                                            exercise.sets.indexOf(nextSet) + 1;
-                                        return ` • Next: Set ${setIndex}`;
-                                    }
-                                    return " • All done!";
-                                })()}
-                            </p>
+                            <div className="flex flex-col gap-1">
+                                <p className="text-sm text-gray-600">
+                                    {exercise.sets.length} set
+                                    {exercise.sets.length !== 1
+                                        ? "s"
+                                        : ""} •{" "}
+                                    {
+                                        exercise.sets.filter(
+                                            (s: any) => s.completed
+                                        ).length
+                                    }{" "}
+                                    completed
+                                    {(() => {
+                                        const nextSet = exercise.sets.find(
+                                            (s: any) => !s.completed
+                                        );
+                                        if (nextSet) {
+                                            const setIndex =
+                                                exercise.sets.indexOf(nextSet) +
+                                                1;
+                                            return ` • Next: Set ${setIndex}`;
+                                        }
+                                        return " • All done!";
+                                    })()}
+                                </p>
+
+                                {/* Performance Data - Third Line */}
+                                {lastPerformance && (
+                                    <div className="flex flex-wrap gap-2 text-xs">
+                                        <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                                            <span>
+                                                Last:{" "}
+                                                {convertFromKg(
+                                                    lastPerformance.averageWeight
+                                                ).toFixed(1)}
+                                                {getUserDisplayUnit()} ×{" "}
+                                                {lastPerformance.averageReps.toFixed(
+                                                    0
+                                                )}
+                                            </span>
+                                        </div>
+
+                                        {/* Personal Records */}
+                                        {exercisePRs?.weightPR && (
+                                            <div className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded">
+                                                <span>
+                                                    PR:{" "}
+                                                    {convertFromKg(
+                                                        exercisePRs.weightPR
+                                                            .maxWeight
+                                                    ).toFixed(1)}
+                                                    {getUserDisplayUnit()} (
+                                                    {exercisePRs.weightPR.reps})
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Volume PR */}
+                                        {exercisePRs?.volumePR && (
+                                            <div className="flex items-center gap-1 bg-purple-50 text-purple-700 px-2 py-1 rounded">
+                                                <span>
+                                                    Vol:{" "}
+                                                    {convertFromKg(
+                                                        exercisePRs.volumePR
+                                                            .maxVolume
+                                                    ).toFixed(0)}
+                                                    {getUserDisplayUnit()}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 

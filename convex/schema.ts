@@ -141,6 +141,28 @@ const applicationTables = {
         .index("by_session", ["sessionId"])
         .index("by_user", ["userId"])
         .index("by_user_and_date", ["userId", "measuredAt"]),
+
+    personalRecords: defineTable({
+        userId: v.id("users"),
+        exerciseName: v.string(),
+        maxWeight: v.number(), // effective weight in kg
+        weight: v.number(), // original weight in original unit
+        weightUnit: v.union(v.literal("kg"), v.literal("lbs")), // original unit
+        reps: v.number(), // reps at which this weight was achieved
+        date: v.number(),
+        sessionId: v.id("sessions"),
+    }).index("by_user_and_exercise", ["userId", "exerciseName"]),
+
+    volumeRecords: defineTable({
+        userId: v.id("users"),
+        exerciseName: v.string(),
+        maxVolume: v.number(), // volume in kg (effectiveWeight * reps)
+        weight: v.number(), // original weight in original unit
+        weightUnit: v.union(v.literal("kg"), v.literal("lbs")), // original unit
+        reps: v.number(),
+        date: v.number(),
+        sessionId: v.id("sessions"),
+    }).index("by_user_and_exercise", ["userId", "exerciseName"]),
 };
 
 export default defineSchema({

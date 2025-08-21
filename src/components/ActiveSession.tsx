@@ -21,6 +21,9 @@ export function ActiveSession() {
     const removeSet = useMutation(api.sets.remove);
     const updateSet = useMutation(api.sets.update);
     const bulkFinalizeSets = useMutation(api.sets.bulkFinalize);
+    const updatePersonalRecords = useMutation(
+        api.personalRecords.updatePersonalRecords
+    );
 
     const [notes, setNotes] = useState("");
     const [showCompleteDialog, setShowCompleteDialog] = useState(false);
@@ -216,6 +219,7 @@ export function ActiveSession() {
                 effectiveWeight: number;
                 isBodyweight: boolean;
             }> = [];
+            const effectiveWeightsMap = new Map<string, number>(); // Store for reuse
             let totalVolume = 0;
 
             for (const exercise of exerciseGroups) {
@@ -229,11 +233,13 @@ export function ActiveSession() {
                     const effectiveWeight = isBwExercise
                         ? Math.max(bodyWeightKg - weightKg, 0)
                         : weightKg;
+
                     updates.push({
                         setId: set._id,
                         effectiveWeight,
                         isBodyweight: isBwExercise,
                     });
+                    effectiveWeightsMap.set(set._id, effectiveWeight); // Store for reuse
                     totalVolume += (set.reps || 0) * effectiveWeight;
                 }
             }
@@ -261,12 +267,63 @@ export function ActiveSession() {
                 }
             }
 
-            // 4) Complete the session with totalVolume
+            // 4) Update personal records for each exercise
+            const exercisePRs = new Map<
+                string,
+                { newWeightPR: boolean; newVolumePR: boolean }
+            >();
+
+            for (const exercise of exerciseGroups) {
+                const completedSets = exercise.sets.filter(
+                    (set) => set.completed
+                );
+                if (completedSets.length === 0) continue;
+
+                const setsData = completedSets.map((set) => {
+                    // Reuse the effective weight we already calculated
+                    const effectiveWeight =
+                        effectiveWeightsMap.get(set._id) || 0;
+
+                    return {
+                        effectiveWeight,
+                        weight: set.weight || 0, // original weight in original unit
+                        weightUnit: set.weightUnit || "kg", // original unit
+                        reps: set.reps || 0,
+                    };
+                });
+
+                try {
+                    const result = await updatePersonalRecords({
+                        exerciseName: exercise.name,
+                        sessionId: activeSession._id as any,
+                        sets: setsData,
+                    });
+
+                    exercisePRs.set(exercise.name, result);
+                } catch (error) {
+                    console.error(
+                        `Failed to update PRs for ${exercise.name}:`,
+                        error
+                    );
+                }
+            }
+
+            // 5) Complete the session with totalVolume
             await completeSession({
                 sessionId: activeSession._id as any,
                 notes: notes.trim() || undefined,
                 totalVolume,
             });
+
+            // 6) Show PR notifications
+            for (const [exerciseName, prs] of exercisePRs) {
+                if (prs.newWeightPR) {
+                    toast.success(`🏆 New weight PR for ${exerciseName}!`);
+                }
+                if (prs.newVolumePR) {
+                    toast.success(`📊 New volume PR for ${exerciseName}!`);
+                }
+            }
 
             toast.success("Workout completed!");
             setShowCompleteDialog(false);
