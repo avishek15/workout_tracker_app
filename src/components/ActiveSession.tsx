@@ -282,9 +282,13 @@ export function ActiveSession() {
                         }
                         onToggleBodyweight={toggleExerciseBodyweight}
                         isBodyweight={exercise.isBodyweight}
-                        isExpanded={expandedExercises.has(`${exercise.name}-${exerciseIndex}`)}
+                        isExpanded={expandedExercises.has(
+                            `${exercise.name}-${exerciseIndex}`
+                        )}
                         onToggleExpansion={() =>
-                            toggleExerciseExpansion(`${exercise.name}-${exerciseIndex}`)
+                            toggleExerciseExpansion(
+                                `${exercise.name}-${exerciseIndex}`
+                            )
                         }
                     />
                 ))}
