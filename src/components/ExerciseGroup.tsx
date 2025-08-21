@@ -31,7 +31,7 @@ export function ExerciseGroup({
     onToggleExpansion,
 }: ExerciseGroupProps) {
     return (
-        <div key={exercise.name} className="space-y-4">
+        <div className="space-y-4">
             {/* Exercise Header */}
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 shadow-sm">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
@@ -66,21 +66,32 @@ export function ExerciseGroup({
                                     ).length
                                 }{" "}
                                 completed
+                                {(() => {
+                                    const nextSet = exercise.sets.find(
+                                        (s: any) => !s.completed
+                                    );
+                                    if (nextSet) {
+                                        const setIndex =
+                                            exercise.sets.indexOf(nextSet) + 1;
+                                        return ` • Next: Set ${setIndex}`;
+                                    }
+                                    return " • All done!";
+                                })()}
                             </p>
                         </div>
                     </div>
 
                     {/* Bodyweight Toggle - Only show when expanded */}
                     {isExpanded && (
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3">
                             <Switch
                                 checked={isBodyweight}
                                 onCheckedChange={(checked) =>
                                     onToggleBodyweight(exercise.name, checked)
                                 }
-                                className="scale-125 data-[state=checked]:bg-secondary data-[state=unchecked]:bg-background-secondary [&>span]:bg-accent-primary [&>span]:border-2 [&>span]:border-black/20 shadow-md hover:shadow-lg transition-shadow border-2 border-accent-primary/30"
+                                className="scale-110 sm:scale-125 data-[state=checked]:bg-secondary data-[state=unchecked]:bg-background-secondary [&>span]:bg-accent-primary [&>span]:border-2 [&>span]:border-black/20 shadow-md hover:shadow-lg transition-shadow border-2 border-accent-primary/30"
                             />
-                            <span className="text-sm font-semibold text-text-primary">
+                            <span className="text-xs sm:text-sm font-semibold text-text-primary">
                                 Bodyweight Exercise
                             </span>
                         </div>
@@ -90,7 +101,7 @@ export function ExerciseGroup({
                 {/* Sets Content - Only show when expanded */}
                 {isExpanded && (
                     <>
-                        <div className="space-y-3">
+                        <div className="space-y-2 sm:space-y-3">
                             {exercise.sets.map((set: any, setIndex: number) => (
                                 <SetRow
                                     key={set._id}
@@ -103,10 +114,10 @@ export function ExerciseGroup({
                         </div>
 
                         {/* Add Set Button at Bottom */}
-                        <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
                             <button
                                 onClick={() => onAddSet(exercise.name)}
-                                className="w-full bg-accent-primary text-white px-4 py-3 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium"
+                                className="w-full bg-accent-primary text-white px-3 sm:px-4 py-2 sm:py-3 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium text-sm sm:text-base min-h-[44px] sm:min-h-0"
                             >
                                 + Add Set
                             </button>
@@ -117,7 +128,7 @@ export function ExerciseGroup({
 
             {/* Exercise Separator */}
             {exerciseIndex < totalExercises - 1 && (
-                <div className="flex items-center justify-center py-4">
+                <div className="flex items-center justify-center">
                     <div className="w-16 h-px bg-gray-300"></div>
                     <div className="mx-4 text-xs text-gray-500 font-medium uppercase tracking-wider">
                         Next Exercise

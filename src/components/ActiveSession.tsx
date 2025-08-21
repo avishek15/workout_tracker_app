@@ -271,7 +271,7 @@ export function ActiveSession() {
             <div className="space-y-6">
                 {exerciseGroups.map((exercise, exerciseIndex) => (
                     <ExerciseGroup
-                        key={exercise.name}
+                        key={`${exercise.name}-${exerciseIndex}`}
                         exercise={exercise}
                         exerciseIndex={exerciseIndex}
                         totalExercises={exerciseGroups.length}
@@ -282,9 +282,9 @@ export function ActiveSession() {
                         }
                         onToggleBodyweight={toggleExerciseBodyweight}
                         isBodyweight={exercise.isBodyweight}
-                        isExpanded={expandedExercises.has(exercise.name)}
+                        isExpanded={expandedExercises.has(`${exercise.name}-${exerciseIndex}`)}
                         onToggleExpansion={() =>
-                            toggleExerciseExpansion(exercise.name)
+                            toggleExerciseExpansion(`${exercise.name}-${exerciseIndex}`)
                         }
                     />
                 ))}

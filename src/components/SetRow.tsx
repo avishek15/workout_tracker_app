@@ -55,20 +55,20 @@ export function SetRow({ set, setNumber, onComplete, onRemove }: SetRowProps) {
 
     return (
         <div
-            className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 rounded-lg border ${
+            className={`flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border ${
                 set.completed
                     ? "bg-green-50 border-green-200"
                     : "bg-gray-50 border-gray-200"
             }`}
         >
             {/* Set Number */}
-            <div className="w-8 text-center font-medium text-gray-600 flex-shrink-0">
+            <div className="w-6 sm:w-8 text-center font-medium text-gray-600 flex-shrink-0 text-sm sm:text-base">
                 {setNumber}
             </div>
 
             {/* Input Fields */}
-            <div className="flex flex-col sm:flex-row gap-6 flex-1">
-                <div className="flex items-center gap-2">
+            <div className="flex flex-col w-full sm:flex-row gap-3 sm:gap-6 flex-1">
+                <div className="flex w-full items-center gap-2">
                     <input
                         type="number"
                         min="0"
@@ -104,41 +104,43 @@ export function SetRow({ set, setNumber, onComplete, onRemove }: SetRowProps) {
                                 setRepsInputValue("0");
                             }
                         }}
-                        className="w-20 sm:w-32 px-3 py-2 sm:py-1 border border-gray-300 rounded text-center"
+                        className="w-full sm:w-36 md:w-40 px-2 sm:px-3 py-2 border border-gray-300 rounded text-center text-sm sm:text-base"
                         disabled={set.completed}
                     />
-                    <span className="text-sm text-gray-600">reps</span>
+                    <span className="text-xs sm:text-sm text-gray-600">
+                        reps
+                    </span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex w-full items-center gap-2">
                     <WeightInput
                         value={localWeight}
                         unit={localWeightUnit}
                         onWeightChange={handleWeightChange}
                         disabled={set.completed}
-                        className="w-48 sm:w-64"
+                        className="w-full sm:w-44 md:w-48"
                     />
                 </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto">
                 {!set.completed ? (
                     <button
                         onClick={() => void handleComplete()}
-                        className="flex-1 sm:flex-none bg-accent-primary text-white px-4 py-2 rounded text-sm hover:bg-accent-primary/90 transition-colors"
+                        className="flex-1 sm:flex-none bg-accent-primary text-white px-3 sm:px-4 py-2 rounded text-sm hover:bg-accent-primary/90 transition-colors min-h-[44px] sm:min-h-0"
                     >
                         ✓ Done
                     </button>
                 ) : (
-                    <span className="flex-1 sm:flex-none text-green-600 font-medium text-sm text-center">
+                    <span className="flex-1 sm:flex-none text-green-600 font-medium text-sm text-center min-h-[44px] sm:min-h-0 flex items-center justify-center">
                         ✓ Completed
                     </span>
                 )}
 
                 <button
                     onClick={() => void onRemove(set._id)}
-                    className="text-danger hover:text-danger-hover font-bold text-lg px-2 py-1"
+                    className="text-danger hover:text-danger-hover font-bold text-lg px-2 py-1 min-h-[44px] sm:min-h-0 flex items-center justify-center"
                 >
                     ×
                 </button>
