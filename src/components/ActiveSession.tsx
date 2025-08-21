@@ -101,7 +101,7 @@ export function ActiveSession() {
             if (set) {
                 startRestTimer(set.exerciseName);
             }
-        } catch (error) {
+        } catch {
             toast.error("Failed to complete set");
         }
     };
@@ -111,7 +111,7 @@ export function ActiveSession() {
         try {
             await removeSet({ setId: setId as any });
             toast.success("Set removed");
-        } catch (error) {
+        } catch {
             toast.error("Failed to remove set");
         }
     };
@@ -133,7 +133,7 @@ export function ActiveSession() {
                 isBodyweight,
             });
             toast.success("Set added!");
-        } catch (error) {
+        } catch {
             toast.error("Failed to add set");
         }
     };
@@ -143,7 +143,7 @@ export function ActiveSession() {
         try {
             await cancelSession({ sessionId: activeSession._id as any });
             toast.success("Session cancelled");
-        } catch (error) {
+        } catch {
             toast.error("Failed to cancel session");
         }
     };
@@ -327,7 +327,7 @@ export function ActiveSession() {
 
             toast.success("Workout completed!");
             setShowCompleteDialog(false);
-        } catch (error) {
+        } catch {
             toast.error("Failed to complete session");
         }
     };
