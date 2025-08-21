@@ -24,6 +24,11 @@ export function ActiveSession() {
     const [notes, setNotes] = useState("");
     const [showCompleteDialog, setShowCompleteDialog] = useState(false);
 
+    // Track which exercises are expanded (all start collapsed)
+    const [expandedExercises, setExpandedExercises] = useState<Set<string>>(
+        new Set()
+    );
+
     // Get body weight history from database
     const bodyWeightHistory = useQuery(
         api.bodyWeights.listBySession,
@@ -123,6 +128,18 @@ export function ActiveSession() {
         } catch (error) {
             toast.error("Failed to cancel session");
         }
+    };
+
+    const toggleExerciseExpansion = (exerciseName: string) => {
+        setExpandedExercises((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(exerciseName)) {
+                newSet.delete(exerciseName);
+            } else {
+                newSet.add(exerciseName);
+            }
+            return newSet;
+        });
     };
 
     const handleCompleteSession = async () => {
@@ -265,6 +282,10 @@ export function ActiveSession() {
                         }
                         onToggleBodyweight={toggleExerciseBodyweight}
                         isBodyweight={exercise.isBodyweight}
+                        isExpanded={expandedExercises.has(exercise.name)}
+                        onToggleExpansion={() =>
+                            toggleExerciseExpansion(exercise.name)
+                        }
                     />
                 ))}
             </div>
