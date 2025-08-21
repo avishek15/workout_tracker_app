@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
+import { RestTimer } from "./RestTimer";
 import { Play } from "lucide-react";
 import { useBodyweightToggles } from "../lib/useBodyweightToggles";
 import { convertToKgFromUnit } from "../lib/unitConversion";
@@ -28,6 +29,14 @@ export function ActiveSession() {
     const [expandedExercises, setExpandedExercises] = useState<Set<string>>(
         new Set()
     );
+
+    // Rest timer state
+    const [activeRestTimer, setActiveRestTimer] = useState<{
+        exerciseName: string;
+        restTime: number;
+        remainingTime: number;
+        isActive: boolean;
+    } | null>(null);
 
     // Get body weight history from database
     const bodyWeightHistory = useQuery(
@@ -83,6 +92,12 @@ export function ActiveSession() {
         try {
             await completeSet({ setId: setId as any });
             toast.success("Set completed!");
+
+            // Find the exercise name for this set and start rest timer
+            const set = activeSession.sets.find((s) => s._id === setId);
+            if (set) {
+                startRestTimer(set.exerciseName);
+            }
         } catch (error) {
             toast.error("Failed to complete set");
         }
@@ -140,6 +155,33 @@ export function ActiveSession() {
             }
             return newSet;
         });
+    };
+
+    // Start rest timer for an exercise
+    const startRestTimer = (exerciseName: string) => {
+        const exercise = activeSession.workout?.exercises?.find(
+            (ex) => ex.name === exerciseName
+        );
+
+        if (exercise && exercise.restTime) {
+            setActiveRestTimer({
+                exerciseName,
+                restTime: exercise.restTime,
+                remainingTime: exercise.restTime,
+                isActive: true,
+            });
+        }
+    };
+
+    // Skip rest timer
+    const skipRestTimer = () => {
+        setActiveRestTimer(null);
+    };
+
+    // Start next set (timer completed)
+    const startNextSet = () => {
+        setActiveRestTimer(null);
+        // Could add logic here to auto-expand the next set or focus on it
     };
 
     const handleCompleteSession = async () => {
@@ -308,6 +350,18 @@ export function ActiveSession() {
                 onCancel={() => void handleCancelSession()}
                 onComplete={() => setShowCompleteDialog(true)}
             />
+
+            {/* Rest Timer */}
+            {activeRestTimer && (
+                <RestTimer
+                    exerciseName={activeRestTimer.exerciseName}
+                    restTime={activeRestTimer.restTime}
+                    isActive={activeRestTimer.isActive}
+                    onSkip={skipRestTimer}
+                    onStartNextSet={startNextSet}
+                    onComplete={startNextSet}
+                />
+            )}
         </div>
     );
 }
