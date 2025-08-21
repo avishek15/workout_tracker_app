@@ -60,6 +60,38 @@ export const update = mutation({
     },
 });
 
+// Bulk finalize sets (effectiveWeight + isBodyweight)
+export const bulkFinalize = mutation({
+    args: {
+        updates: v.array(
+            v.object({
+                setId: v.id("sets"),
+                effectiveWeight: v.number(),
+                isBodyweight: v.boolean(),
+            })
+        ),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) {
+            throw new Error("Not authenticated");
+        }
+
+        for (const u of args.updates) {
+            const set = await ctx.db.get(u.setId);
+            if (!set) continue;
+            const session = await ctx.db.get(set.sessionId);
+            if (!session || session.userId !== userId) continue;
+            await ctx.db.patch(u.setId, {
+                effectiveWeight: u.effectiveWeight,
+                isBodyweight: u.isBodyweight,
+                updatedAt: Date.now(),
+            });
+        }
+        return null;
+    },
+});
+
 // Mark a set as completed
 export const complete = mutation({
     args: { setId: v.id("sets") },
@@ -161,6 +193,7 @@ export const add = mutation({
 
         await ctx.db.insert("sets", {
             sessionId: args.sessionId,
+            userId,
             exerciseName: args.exerciseName,
             setNumber: maxSetNumber + 1,
             reps: args.reps,

@@ -139,7 +139,9 @@ export const get = query({
 
 // Start a new workout session
 export const start = mutation({
-    args: { workoutId: v.id("workouts") },
+    args: {
+        workoutId: v.id("workouts"),
+    },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
         if (!userId) {
@@ -179,6 +181,7 @@ export const start = mutation({
             for (let setNumber = 1; setNumber <= targetSets; setNumber++) {
                 await ctx.db.insert("sets", {
                     sessionId,
+                    userId,
                     exerciseName: exercise.name,
                     setNumber,
                     reps: exercise.targetReps || 0,
@@ -199,6 +202,7 @@ export const complete = mutation({
     args: {
         sessionId: v.id("sessions"),
         notes: v.optional(v.string()),
+        totalVolume: v.number(),
     },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
@@ -211,7 +215,7 @@ export const complete = mutation({
             throw new Error("Session not found or not authorized");
         }
 
-        // Calculate session summary (volume, sets, exercises)
+        // Calculate session summary (sets, exercises)
         const sessionSummary = await ctx.runQuery(
             internal.utils.calculateSessionSummary,
             {
@@ -223,7 +227,7 @@ export const complete = mutation({
             status: "completed",
             endTime: Date.now(),
             notes: args.notes,
-            totalVolume: sessionSummary.totalVolume,
+            totalVolume: args.totalVolume,
             completedSets: sessionSummary.completedSets,
             totalSets: sessionSummary.totalSets,
             exerciseCount: sessionSummary.exerciseCount,
@@ -257,7 +261,7 @@ export const cancel = mutation({
         await ctx.db.patch(args.sessionId, {
             status: "cancelled",
             endTime: Date.now(),
-            totalVolume: sessionSummary.totalVolume,
+            // totalVolume: sessionSummary.totalVolume,
             completedSets: sessionSummary.completedSets,
             totalSets: sessionSummary.totalSets,
             exerciseCount: sessionSummary.exerciseCount,

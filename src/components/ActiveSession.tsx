@@ -4,6 +4,7 @@ import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { Play } from "lucide-react";
 import { useBodyweightToggles } from "../lib/useBodyweightToggles";
+import { convertToKgFromUnit } from "../lib/unitConversion";
 import { SessionHeader } from "./SessionHeader";
 import { BodyWeightSection } from "./BodyWeightSection";
 import { ExerciseGroup } from "./ExerciseGroup";
@@ -17,6 +18,8 @@ export function ActiveSession() {
     const completeSet = useMutation(api.sets.complete);
     const addSet = useMutation(api.sets.add);
     const removeSet = useMutation(api.sets.remove);
+    const updateSet = useMutation(api.sets.update);
+    const bulkFinalizeSets = useMutation(api.sets.bulkFinalize);
 
     const [notes, setNotes] = useState("");
     const [showCompleteDialog, setShowCompleteDialog] = useState(false);
@@ -26,6 +29,9 @@ export function ActiveSession() {
         api.bodyWeights.listBySession,
         activeSession ? { sessionId: activeSession._id } : "skip"
     );
+
+    // Get latest user body weight for fallback
+    const latestUserBodyWeight = useQuery(api.bodyWeights.latestForUser);
 
     // Use custom hook for bodyweight toggles
     const { toggleExerciseBodyweight, getExerciseBodyweight } =
@@ -121,10 +127,88 @@ export function ActiveSession() {
 
     const handleCompleteSession = async () => {
         try {
+            // 1) Resolve body weight in kg
+            let bodyWeightKg = 80; // fallback
+            const sessionWeights = bodyWeightHistory ?? [];
+            if (sessionWeights.length > 0) {
+                const latest = sessionWeights[0];
+                bodyWeightKg = convertToKgFromUnit(
+                    latest.weight || 0,
+                    (latest.weightUnit || "kg") as "kg" | "lbs"
+                );
+            } else {
+                // Use latest user body weight from database
+                if (latestUserBodyWeight) {
+                    bodyWeightKg = convertToKgFromUnit(
+                        latestUserBodyWeight.weight || 0,
+                        (latestUserBodyWeight.weightUnit || "kg") as
+                            | "kg"
+                            | "lbs"
+                    );
+                } else {
+                    // Final fallback to 80kg
+                    bodyWeightKg = 80;
+                }
+            }
+
+            // 2) Stage updates and compute total volume
+            const updates: Array<{
+                setId: string;
+                effectiveWeight: number;
+                isBodyweight: boolean;
+            }> = [];
+            let totalVolume = 0;
+
+            for (const exercise of exerciseGroups) {
+                const isBwExercise = !!exercise.isBodyweight;
+                for (const set of exercise.sets) {
+                    if (!set.completed) continue;
+                    const weightKg = convertToKgFromUnit(
+                        set.weight || 0,
+                        set.weightUnit || "kg"
+                    );
+                    const effectiveWeight = isBwExercise
+                        ? Math.max(bodyWeightKg - weightKg, 0)
+                        : weightKg;
+                    updates.push({
+                        setId: set._id,
+                        effectiveWeight,
+                        isBodyweight: isBwExercise,
+                    });
+                    totalVolume += (set.reps || 0) * effectiveWeight;
+                }
+            }
+
+            // 3) Persist set updates in bulk (fallback to per-set if needed)
+            try {
+                await bulkFinalizeSets({
+                    updates: updates.map((u) => ({
+                        setId: u.setId as any,
+                        effectiveWeight: u.effectiveWeight,
+                        isBodyweight: u.isBodyweight,
+                    })),
+                });
+            } catch {
+                // Fallback: per-set updates
+                for (const u of updates) {
+                    await updateSet({
+                        setId: u.setId as any,
+                        reps: 0,
+                        weight: undefined,
+                        weightUnit: undefined,
+                        effectiveWeight: u.effectiveWeight,
+                        isBodyweight: u.isBodyweight,
+                    });
+                }
+            }
+
+            // 4) Complete the session with totalVolume
             await completeSession({
                 sessionId: activeSession._id as any,
                 notes: notes.trim() || undefined,
+                totalVolume,
             });
+
             toast.success("Workout completed!");
             setShowCompleteDialog(false);
         } catch (error) {

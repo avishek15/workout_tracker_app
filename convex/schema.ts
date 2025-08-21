@@ -28,7 +28,6 @@ const applicationTables = {
         ),
 
         // offline/sync metadata
-        clientId: v.optional(v.string()),
         updatedAt: v.number(),
         deletedAt: v.optional(v.number()),
 
@@ -36,8 +35,7 @@ const applicationTables = {
         isPublic: v.optional(v.boolean()),
     })
         .index("by_user", ["userId"])
-        .index("by_user_and_updatedAt", ["userId", "updatedAt"])
-        .index("by_clientId", ["clientId"]),
+        .index("by_user_and_updatedAt", ["userId", "updatedAt"]),
 
     sessions: defineTable({
         workoutId: v.id("workouts"),
@@ -56,17 +54,16 @@ const applicationTables = {
         exerciseCount: v.optional(v.number()), // Denormalized: number of exercises
 
         // offline/sync metadata
-        clientId: v.optional(v.string()),
         updatedAt: v.number(),
         deletedAt: v.optional(v.number()),
     })
         .index("by_user", ["userId"])
         .index("by_user_and_status", ["userId", "status"])
-        .index("by_user_and_updatedAt", ["userId", "updatedAt"])
-        .index("by_clientId", ["clientId"]),
+        .index("by_user_and_updatedAt", ["userId", "updatedAt"]),
 
     sets: defineTable({
         sessionId: v.id("sessions"),
+        userId: v.id("users"),
         exerciseName: v.string(),
         setNumber: v.number(),
         reps: v.number(),
@@ -78,14 +75,14 @@ const applicationTables = {
         completedAt: v.optional(v.number()),
 
         // offline/sync metadata
-        clientId: v.optional(v.string()),
         updatedAt: v.number(),
         deletedAt: v.optional(v.number()),
     })
         .index("by_session", ["sessionId"])
+        .index("by_user", ["userId"])
+        .index("by_user_and_exercise", ["userId", "exerciseName"])
         .index("by_session_and_exercise", ["sessionId", "exerciseName"])
-        .index("by_session_and_updatedAt", ["sessionId", "updatedAt"])
-        .index("by_clientId", ["clientId"]),
+        .index("by_session_and_updatedAt", ["sessionId", "updatedAt"]),
 
     // Friend requests
     friendRequests: defineTable({
@@ -138,14 +135,12 @@ const applicationTables = {
         measuredAt: v.number(),
 
         // offline/sync metadata
-        clientId: v.optional(v.string()),
         updatedAt: v.number(),
         deletedAt: v.optional(v.number()),
     })
         .index("by_session", ["sessionId"])
         .index("by_user", ["userId"])
-        .index("by_user_and_date", ["userId", "measuredAt"])
-        .index("by_clientId", ["clientId"]),
+        .index("by_user_and_date", ["userId", "measuredAt"]),
 };
 
 export default defineSchema({

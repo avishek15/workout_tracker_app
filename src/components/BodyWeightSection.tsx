@@ -18,6 +18,8 @@ export function BodyWeightSection({
 
     const [bodyWeight, setBodyWeight] = useState<number | undefined>();
     const [bodyWeightUnit, setBodyWeightUnit] = useState<"kg" | "lbs">("kg");
+    const [savedBodyWeight, setSavedBodyWeight] = useState<any>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     const handleBodyWeightChange = (weight: number, unit: "kg" | "lbs") => {
         setBodyWeight(weight);
@@ -30,22 +32,31 @@ export function BodyWeightSection({
             return;
         }
 
+        setIsSaving(true);
         try {
-            await addBodyWeight({
+            const result = await addBodyWeight({
                 sessionId: sessionId as any,
                 weight: bodyWeight,
-                unit: bodyWeightUnit,
+                weightUnit: bodyWeightUnit,
             });
             toast.success("Body weight saved!");
+            setSavedBodyWeight({
+                _id: result,
+                weight: bodyWeight,
+                weightUnit: bodyWeightUnit,
+                measuredAt: Date.now(),
+            });
             setBodyWeight(undefined);
         } catch (error) {
             toast.error("Failed to save body weight");
+        } finally {
+            setIsSaving(false);
         }
     };
 
     const handleRemoveBodyWeight = async (bodyWeightId: string) => {
         try {
-            await removeBodyWeight({ bodyWeightId: bodyWeightId as any });
+            await removeBodyWeight({ weightId: bodyWeightId as any });
             toast.success("Body weight removed");
         } catch (error) {
             toast.error("Failed to remove body weight");
@@ -65,49 +76,42 @@ export function BodyWeightSection({
                 </div>
             </div>
 
-            <div className="flex items-center gap-4">
-                <div className="flex-1">
-                    <WeightInput
-                        value={bodyWeight}
-                        unit={bodyWeightUnit}
-                        onWeightChange={handleBodyWeightChange}
-                        placeholder="Enter weight"
-                    />
-                </div>
-                <button
-                    onClick={() => void handleSaveBodyWeight()}
-                    className="bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium"
-                >
-                    Save
-                </button>
-            </div>
-
-            {/* Body Weight History */}
-            {bodyWeightHistory && bodyWeightHistory.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">
-                        Today's Entries
-                    </h4>
-                    <div className="space-y-2">
-                        {bodyWeightHistory.map((entry) => (
-                            <div
-                                key={entry._id}
-                                className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-gray-200"
-                            >
-                                <span className="text-sm text-gray-900">
-                                    {entry.weight} {entry.unit}
-                                </span>
-                                <button
-                                    onClick={() =>
-                                        void handleRemoveBodyWeight(entry._id)
-                                    }
-                                    className="text-red-500 hover:text-red-700 text-sm"
-                                >
-                                    Remove
-                                </button>
-                            </div>
-                        ))}
+            {!savedBodyWeight ? (
+                <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                        <WeightInput
+                            value={bodyWeight}
+                            unit={bodyWeightUnit}
+                            onWeightChange={handleBodyWeightChange}
+                            placeholder="Enter weight"
+                        />
                     </div>
+                    <button
+                        onClick={() => void handleSaveBodyWeight()}
+                        disabled={isSaving}
+                        className="bg-accent-primary text-white px-4 py-2 rounded-lg hover:bg-accent-primary/90 transition-colors font-medium disabled:opacity-50"
+                    >
+                        {isSaving ? "Saving..." : "Save"}
+                    </button>
+                </div>
+            ) : (
+                <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+                    <div className="flex items-center gap-3">
+                        <span className="text-green-600 font-medium">✓</span>
+                        <span className="text-sm text-gray-900">
+                            {savedBodyWeight.weight}{" "}
+                            {savedBodyWeight.weightUnit}
+                        </span>
+                    </div>
+                    <button
+                        onClick={() => {
+                            setSavedBodyWeight(null);
+                            setBodyWeight(undefined);
+                        }}
+                        className="text-red-500 hover:text-red-700 text-sm"
+                    >
+                        Edit
+                    </button>
                 </div>
             )}
         </div>
