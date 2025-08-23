@@ -297,6 +297,149 @@ export const getFriends = query({
     },
 });
 
+// Leaderboards for friends (most active, longest streaks, most shared)
+export const getFriendsLeaderboards = query({
+    args: {},
+    returns: v.object({
+        mostActive: v.array(
+            v.object({
+                userId: v.id("users"),
+                name: v.optional(v.string()),
+                workouts: v.number(),
+            })
+        ),
+        longestStreaks: v.array(
+            v.object({
+                userId: v.id("users"),
+                name: v.optional(v.string()),
+                streak: v.number(),
+            })
+        ),
+        mostShared: v.array(
+            v.object({
+                userId: v.id("users"),
+                name: v.optional(v.string()),
+                shares: v.number(),
+            })
+        ),
+    }),
+    handler: async (ctx) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) {
+            return { mostActive: [], longestStreaks: [], mostShared: [] };
+        }
+
+        // Resolve friends
+        const friendships1 = await ctx.db
+            .query("friendships")
+            .withIndex("by_user1", (q) => q.eq("user1Id", userId))
+            .collect();
+        const friendships2 = await ctx.db
+            .query("friendships")
+            .withIndex("by_user2", (q) => q.eq("user2Id", userId))
+            .collect();
+        const friendIds = [
+            ...friendships1.map((f) => f.user2Id),
+            ...friendships2.map((f) => f.user1Id),
+        ];
+        if (friendIds.length === 0) {
+            return { mostActive: [], longestStreaks: [], mostShared: [] };
+        }
+
+        // Load friend docs
+        const friends = await Promise.all(
+            friendIds.map((id) => ctx.db.get(id))
+        );
+        const now = Date.now();
+        const since = now - 30 * 24 * 60 * 60 * 1000; // last 30 days
+
+        // Compute activity and streaks per friend
+        const mostActive: Array<{
+            userId: string;
+            name?: string;
+            workouts: number;
+        }> = [];
+        const longestStreaks: Array<{
+            userId: string;
+            name?: string;
+            streak: number;
+        }> = [];
+
+        for (const friend of friends) {
+            if (!friend) continue;
+            const sessions = await ctx.db
+                .query("sessions")
+                .withIndex("by_user_and_status", (q) =>
+                    q.eq("userId", friend._id).eq("status", "completed")
+                )
+                .filter((q) => q.gte(q.field("endTime"), since))
+                .collect();
+
+            mostActive.push({
+                userId: friend._id as any,
+                name: friend.name,
+                workouts: sessions.length,
+            });
+
+            // Streak calculation using utility, based on completed sessions
+            const streak: number = await ctx.runQuery(
+                internal.utils.calculateCurrentStreak,
+                {
+                    sessions: sessions.map((s) => ({ endTime: s.endTime })),
+                }
+            );
+            longestStreaks.push({
+                userId: friend._id as any,
+                name: friend.name,
+                streak,
+            });
+        }
+
+        // Shares by friend to current user in last 30 days
+        const shares = await ctx.db
+            .query("sharedWorkouts")
+            .withIndex("by_shared_with", (q) =>
+                q.eq("sharedWithUserId", userId)
+            )
+            .filter((q) => q.gte(q.field("sharedAt"), since))
+            .collect();
+        const sharesByFriend = new Map<string, number>();
+        for (const s of shares) {
+            sharesByFriend.set(
+                s.sharedByUserId,
+                (sharesByFriend.get(s.sharedByUserId) || 0) + 1
+            );
+        }
+        const mostShared: Array<{
+            userId: string;
+            name?: string;
+            shares: number;
+        }> = [];
+        for (const friend of friends) {
+            if (!friend) continue;
+            const count = sharesByFriend.get(friend._id) || 0;
+            if (count > 0) {
+                mostShared.push({
+                    userId: friend._id as any,
+                    name: friend.name,
+                    shares: count,
+                });
+            }
+        }
+
+        // Sort and take top 5 for each leaderboard
+        mostActive.sort((a, b) => b.workouts - a.workouts);
+        longestStreaks.sort((a, b) => b.streak - a.streak);
+        mostShared.sort((a, b) => b.shares - a.shares);
+
+        return {
+            mostActive: mostActive.slice(0, 5) as any,
+            longestStreaks: longestStreaks.slice(0, 5) as any,
+            mostShared: mostShared.slice(0, 5) as any,
+        };
+    },
+});
+
 // Search users by email or name
 export const searchUsers = query({
     args: { query: v.string() },
