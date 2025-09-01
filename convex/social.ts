@@ -353,6 +353,27 @@ export const getFriendsLeaderboards = query({
         const now = Date.now();
         const since = now - 30 * 24 * 60 * 60 * 1000; // last 30 days
 
+        // Fetch all sessions for all friends in a single query to avoid N+1 problem
+        const allSessions = await ctx.db
+            .query("sessions")
+            .withIndex("by_user_and_status", (q) => q.eq("status", "completed"))
+            .filter((q) =>
+                q.and(
+                    q.gte(q.field("endTime"), since),
+                    q.or(...friendIds.map((id) => q.eq(q.field("userId"), id)))
+                )
+            )
+            .collect();
+
+        // Group sessions by user ID for efficient processing
+        const sessionsByUser = new Map<string, any[]>();
+        for (const session of allSessions) {
+            if (!sessionsByUser.has(session.userId)) {
+                sessionsByUser.set(session.userId, []);
+            }
+            sessionsByUser.get(session.userId)!.push(session);
+        }
+
         // Compute activity and streaks per friend
         const mostActive: Array<{
             userId: string;
@@ -367,13 +388,7 @@ export const getFriendsLeaderboards = query({
 
         for (const friend of friends) {
             if (!friend) continue;
-            const sessions = await ctx.db
-                .query("sessions")
-                .withIndex("by_user_and_status", (q) =>
-                    q.eq("userId", friend._id).eq("status", "completed")
-                )
-                .filter((q) => q.gte(q.field("endTime"), since))
-                .collect();
+            const sessions = sessionsByUser.get(friend._id) || [];
 
             mostActive.push({
                 userId: friend._id as any,
