@@ -561,7 +561,6 @@ function SessionDetailsModal({
                             </div>
                         )}
 
-                        {/* Volume Breakdown (simplified) */}
                         <div className="mb-6 p-4 bg-blue-50 rounded-lg">
                             <div className="text-sm font-medium text-gray-700 mb-3">
                                 Volume Breakdown:

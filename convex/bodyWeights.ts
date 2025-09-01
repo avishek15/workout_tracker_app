@@ -17,6 +17,7 @@ export const listBySession = query({
             updatedAt: v.number(),
         })
     ),
+
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
         if (!userId) {
