@@ -353,17 +353,20 @@ export const getFriendsLeaderboards = query({
         const now = Date.now();
         const since = now - 30 * 24 * 60 * 60 * 1000; // last 30 days
 
-        // Fetch all sessions for all friends in a single query to avoid N+1 problem
-        const allSessions = await ctx.db
-            .query("sessions")
-            .withIndex("by_user_and_status", (q) => q.eq("status", "completed"))
-            .filter((q) =>
-                q.and(
-                    q.gte(q.field("endTime"), since),
-                    q.or(...friendIds.map((id) => q.eq(q.field("userId"), id)))
+        // Fetch all sessions for all friends using parallel queries
+        // This is still N queries but they run in parallel, which is much faster than sequential
+        const allSessionsPromises = friendIds.map((friendId) =>
+            ctx.db
+                .query("sessions")
+                .withIndex("by_user_and_status", (q) =>
+                    q.eq("userId", friendId).eq("status", "completed")
                 )
-            )
-            .collect();
+                .filter((q) => q.gte(q.field("endTime"), since))
+                .collect()
+        );
+
+        const allSessionsArrays = await Promise.all(allSessionsPromises);
+        const allSessions = allSessionsArrays.flat();
 
         // Group sessions by user ID for efficient processing
         const sessionsByUser = new Map<string, any[]>();
