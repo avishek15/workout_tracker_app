@@ -10,15 +10,21 @@ import {
     Activity,
     Calendar,
     Target,
-    Dumbbell,
     BarChart3,
-    ChevronDown,
-    ChevronUp,
 } from "lucide-react";
 import { VolumeStats } from "./VolumeStats";
 
+type LeaderboardsData = {
+    mostActive: Array<{ userId: string; name?: string; workouts: number }>;
+    longestStreaks: Array<{ userId: string; name?: string; streak: number }>;
+    mostShared: Array<{ userId: string; name?: string; shares: number }>;
+};
+
 export function SocialDashboard() {
     const friends = useQuery(api.social.getFriends);
+    const leaderboards = useQuery(api.social.getFriendsLeaderboards) as
+        | LeaderboardsData
+        | undefined;
     const pendingRequests = useQuery(api.social.getPendingFriendRequests);
     const sharedWorkouts = useQuery(api.social.getSharedWorkouts);
     const friendsPublicWorkouts = useQuery(api.social.getFriendsPublicWorkouts);
@@ -216,26 +222,36 @@ export function SocialDashboard() {
                             Most Active
                         </h4>
                         <div className="space-y-2">
-                            {friends && friends.length > 0 ? (
-                                friends.slice(0, 5).map((friend, index) => (
-                                    <div
-                                        key={friend.userId}
-                                        className="flex items-center gap-3 p-2 bg-background-secondary rounded"
-                                    >
-                                        <div className="w-6 h-6 bg-accent-primary/20 rounded-full flex items-center justify-center text-xs font-medium text-accent-primary">
-                                            {index + 1}
+                            {leaderboards &&
+                            leaderboards.mostActive.length > 0 ? (
+                                leaderboards.mostActive.map(
+                                    (
+                                        entry: {
+                                            userId: string;
+                                            name?: string;
+                                            workouts: number;
+                                        },
+                                        index: number
+                                    ) => (
+                                        <div
+                                            key={`${entry.userId}`}
+                                            className="flex items-center gap-3 p-2 bg-background-secondary rounded"
+                                        >
+                                            <div className="w-6 h-6 bg-accent-primary/20 rounded-full flex items-center justify-center text-xs font-medium text-accent-primary">
+                                                {index + 1}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-text-primary truncate">
+                                                    {entry.name ||
+                                                        "Unknown User"}
+                                                </p>
+                                            </div>
+                                            <div className="text-sm text-text-secondary">
+                                                {entry.workouts} wkts
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-text-primary truncate">
-                                                {friend.name || "Unknown User"}
-                                            </p>
-                                        </div>
-                                        <div className="text-sm text-text-secondary">
-                                            {/* Placeholder for activity score */}
-                                            --
-                                        </div>
-                                    </div>
-                                ))
+                                    )
+                                )
                             ) : (
                                 <p className="text-text-secondary text-sm">
                                     No friends yet
@@ -251,26 +267,36 @@ export function SocialDashboard() {
                             Longest Streaks
                         </h4>
                         <div className="space-y-2">
-                            {friends && friends.length > 0 ? (
-                                friends.slice(0, 5).map((friend, index) => (
-                                    <div
-                                        key={friend.userId}
-                                        className="flex items-center gap-3 p-2 bg-background-secondary rounded"
-                                    >
-                                        <div className="w-6 h-6 bg-accent-secondary/20 rounded-full flex items-center justify-center text-xs font-medium text-accent-secondary">
-                                            {index + 1}
+                            {leaderboards &&
+                            leaderboards.longestStreaks.length > 0 ? (
+                                leaderboards.longestStreaks.map(
+                                    (
+                                        entry: {
+                                            userId: string;
+                                            name?: string;
+                                            streak: number;
+                                        },
+                                        index: number
+                                    ) => (
+                                        <div
+                                            key={`${entry.userId}`}
+                                            className="flex items-center gap-3 p-2 bg-background-secondary rounded"
+                                        >
+                                            <div className="w-6 h-6 bg-accent-secondary/20 rounded-full flex items-center justify-center text-xs font-medium text-accent-secondary">
+                                                {index + 1}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-text-primary truncate">
+                                                    {entry.name ||
+                                                        "Unknown User"}
+                                                </p>
+                                            </div>
+                                            <div className="text-sm text-text-secondary">
+                                                {entry.streak} days
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-text-primary truncate">
-                                                {friend.name || "Unknown User"}
-                                            </p>
-                                        </div>
-                                        <div className="text-sm text-text-secondary">
-                                            {/* Placeholder for streak count */}
-                                            --
-                                        </div>
-                                    </div>
-                                ))
+                                    )
+                                )
                             ) : (
                                 <p className="text-text-secondary text-sm">
                                     No friends yet
@@ -286,26 +312,36 @@ export function SocialDashboard() {
                             Most Shared
                         </h4>
                         <div className="space-y-2">
-                            {friends && friends.length > 0 ? (
-                                friends.slice(0, 5).map((friend, index) => (
-                                    <div
-                                        key={friend.userId}
-                                        className="flex items-center gap-3 p-2 bg-background-secondary rounded"
-                                    >
-                                        <div className="w-6 h-6 bg-accent-primary/20 rounded-full flex items-center justify-center text-xs font-medium text-accent-primary">
-                                            {index + 1}
+                            {leaderboards &&
+                            leaderboards.mostShared.length > 0 ? (
+                                leaderboards.mostShared.map(
+                                    (
+                                        entry: {
+                                            userId: string;
+                                            name?: string;
+                                            shares: number;
+                                        },
+                                        index: number
+                                    ) => (
+                                        <div
+                                            key={`${entry.userId}`}
+                                            className="flex items-center gap-3 p-2 bg-background-secondary rounded"
+                                        >
+                                            <div className="w-6 h-6 bg-accent-primary/20 rounded-full flex items-center justify-center text-xs font-medium text-accent-primary">
+                                                {index + 1}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-text-primary truncate">
+                                                    {entry.name ||
+                                                        "Unknown User"}
+                                                </p>
+                                            </div>
+                                            <div className="text-sm text-text-secondary">
+                                                {entry.shares} shared
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-text-primary truncate">
-                                                {friend.name || "Unknown User"}
-                                            </p>
-                                        </div>
-                                        <div className="text-sm text-text-secondary">
-                                            {/* Placeholder for shared count */}
-                                            --
-                                        </div>
-                                    </div>
-                                ))
+                                    )
+                                )
                             ) : (
                                 <p className="text-text-secondary text-sm">
                                     No friends yet

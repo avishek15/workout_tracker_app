@@ -5,6 +5,19 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 // Get body weights for a session
 export const listBySession = query({
     args: { sessionId: v.id("sessions") },
+    returns: v.array(
+        v.object({
+            _id: v.id("bodyWeights"),
+            _creationTime: v.number(),
+            sessionId: v.id("sessions"),
+            userId: v.id("users"),
+            weight: v.number(),
+            weightUnit: v.union(v.literal("kg"), v.literal("lbs")),
+            measuredAt: v.number(),
+            updatedAt: v.number(),
+        })
+    ),
+
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx);
         if (!userId) {
@@ -69,16 +82,15 @@ export const add = mutation({
         const existing = await ctx.db
             .query("bodyWeights")
             .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
-            .order("desc")
-            .collect();
+            .first();
 
-        if (existing.length > 0) {
-            await ctx.db.patch(existing[0]._id, {
+        if (existing) {
+            await ctx.db.patch(existing._id, {
                 weight: args.weight,
                 weightUnit: args.weightUnit,
                 updatedAt: Date.now(),
             });
-            return existing[0]._id;
+            return existing._id;
         }
 
         const newId = await ctx.db.insert("bodyWeights", {

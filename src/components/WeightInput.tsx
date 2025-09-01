@@ -10,6 +10,10 @@ interface WeightInputProps {
     className?: string;
     disabled?: boolean;
     showUnitToggle?: boolean;
+    // When true, renders a compact layout where the input has a fixed width
+    compact?: boolean;
+    // Additional classes applied to the input element (e.g., width overrides)
+    inputClassName?: string;
 }
 
 export function WeightInput({
@@ -20,6 +24,8 @@ export function WeightInput({
     className,
     disabled = false,
     showUnitToggle = true,
+    compact = false,
+    inputClassName,
 }: WeightInputProps) {
     const [inputValue, setInputValue] = useState<string>("");
     const [currentUnit, setCurrentUnit] = useState<WeightUnit>(
@@ -72,7 +78,7 @@ export function WeightInput({
 
     return (
         <div className={cn("flex items-center gap-1 sm:gap-2", className)}>
-            <div className="relative flex-1">
+            <div className={cn("relative", compact ? undefined : "flex-1")}>
                 <input
                     type="number"
                     value={inputValue}
@@ -86,9 +92,10 @@ export function WeightInput({
                     placeholder={placeholder}
                     disabled={disabled}
                     className={cn(
-                        "w-full px-3 sm:px-4 py-2 border rounded-md bg-white text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary transition-colors text-sm sm:text-base",
+                        "w-32 px-3 sm:px-4 py-2 border text-center rounded-md bg-white text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary transition-colors text-sm sm:text-base",
                         "border-gray-300",
-                        disabled && "opacity-50 cursor-not-allowed"
+                        disabled && "opacity-50 cursor-not-allowed",
+                        inputClassName
                     )}
                     min="0"
                     step="any"

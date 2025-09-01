@@ -27,7 +27,7 @@ export const list = query({
 export const update = mutation({
     args: {
         setId: v.id("sets"),
-        reps: v.number(),
+        reps: v.optional(v.number()),
         weight: v.optional(v.number()),
         weightUnit: v.optional(v.union(v.literal("kg"), v.literal("lbs"))),
         effectiveWeight: v.optional(v.number()),
@@ -49,14 +49,28 @@ export const update = mutation({
             throw new Error("Not authorized");
         }
 
-        await ctx.db.patch(args.setId, {
-            reps: args.reps,
-            weight: args.weight,
-            weightUnit: args.weightUnit,
-            effectiveWeight: args.effectiveWeight,
-            isBodyweight: args.isBodyweight,
+        // Only include fields in the patch if they are provided
+        const updates: any = {
             updatedAt: Date.now(),
-        });
+        };
+
+        if (args.reps !== undefined) {
+            updates.reps = args.reps;
+        }
+        if (args.weight !== undefined) {
+            updates.weight = args.weight;
+        }
+        if (args.weightUnit !== undefined) {
+            updates.weightUnit = args.weightUnit;
+        }
+        if (args.effectiveWeight !== undefined) {
+            updates.effectiveWeight = args.effectiveWeight;
+        }
+        if (args.isBodyweight !== undefined) {
+            updates.isBodyweight = args.isBodyweight;
+        }
+
+        await ctx.db.patch(args.setId, updates);
     },
 });
 

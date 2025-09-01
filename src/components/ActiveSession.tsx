@@ -258,9 +258,6 @@ export function ActiveSession() {
                 for (const u of updates) {
                     await updateSet({
                         setId: u.setId as any,
-                        reps: 0,
-                        weight: undefined,
-                        weightUnit: undefined,
                         effectiveWeight: u.effectiveWeight,
                         isBodyweight: u.isBodyweight,
                     });
