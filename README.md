@@ -2,6 +2,8 @@
 
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/avishek15/workout_tracker_app?utm_source=oss&utm_medium=github&utm_campaign=avishek15%2Fworkout_tracker_app&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
+TO BE CHANGED TO MOBILE APP
+
 **Track. Progress. Transform.**
 
 FitFlow Pro is a comprehensive fitness tracking platform that helps you monitor your workouts, analyze your progress, and achieve your fitness goals with precision. Built with modern web technologies for a seamless user experience.
